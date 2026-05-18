@@ -1,0 +1,1985 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Speech Interaction</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			:root {
+				color-scheme: dark;
+			}
+
+			/* make video edges fade to black so the circular container blends */
+			.video-container {
+				position: relative;
+				overflow: hidden;
+			}
+
+			.video-container::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				border-radius: inherit;
+				pointer-events: none;
+				background: radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(0,0,0,0.6) 68%, rgba(0,0,0,0.95) 85%);
+			}
+
+			.video-container video {
+				display: block;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				filter: contrast(1.02) saturate(1.05);
+			}
+
+			/* page and hero background tuned to deep navy so the video blends */
+			body {
+				background: radial-gradient(1200px 600px at 50% 20%, #071428 0%, #01050a 45%, #000 100%);
+			}
+
+			#hero {
+				background: transparent;
+			}
+
+			.video-container {
+				background: linear-gradient(180deg, rgba(8,20,40,0.6) 0%, rgba(2,6,15,0.9) 60%);
+			}
+
+			.video-container::before {
+				background: radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(0,0,0,0.55) 68%, rgba(0,0,0,0.98) 88%);
+			}
+
+			.wave-bar {
+				width: 0.5rem;
+				height: 1.4rem;
+				border-radius: 9999px;
+				background: rgba(96, 165, 250, 0.85);
+				animation: wave 1.4s ease-in-out infinite;
+			}
+
+			.wave-bar:nth-child(odd) {
+				animation-delay: -0.2s;
+			}
+
+			.wave-bar:nth-child(3n) {
+				animation-delay: -0.35s;
+			}
+
+			@keyframes wave {
+				0%,
+				100% {
+					transform: scaleY(0.55);
+					opacity: 0.65;
+				}
+
+				50% {
+					transform: scaleY(1.45);
+					opacity: 1;
+				}
+			}
+
+			#hero.listening .wave-bar {
+				background: rgba(248, 113, 113, 0.85);
+				animation-duration: 0.85s;
+			}
+
+			/* mic listening visual (reddish) */
+			#micButton.listening {
+				background: radial-gradient(120% 80% at 30% 25%, rgba(255,115,115,0.95), rgba(220,38,38,0.9));
+				box-shadow: 0 0 48px rgba(248,113,113,0.45);
+				transform: scale(1.06);
+				transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
+			}
+
+			#micButton.listening svg {
+				filter: drop-shadow(0 8px 18px rgba(248,113,113,0.55));
+				color: #fff;
+			}
+
+			/* circular shell and controls */
+			.circle-shell { position: relative; }
+			/* make the shell a perfect circle with a max size; responsive */
+			.circle-shell {
+				/* larger perfect circle: max 520px or 60vw */
+				width: min(520px, 60vw);
+				height: min(520px, 60vw);
+				border-radius: 9999px;
+			}
+			.circle-backdrop { mix-blend-mode: screen; }
+			.control-icon { width: 44px; height: 44px; border-radius: 9999px; display: grid; place-items:center; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); color: #bfe1ff; box-shadow: 0 8px 26px rgba(2,6,15,0.6); transition: transform 0.18s ease, box-shadow 0.18s ease; }
+			.control-icon:hover { transform: translateY(-6px); box-shadow: 0 18px 48px rgba(2,6,15,0.7); }
+
+			/* improved icon sizing and ring positions around the circle */
+			.control-icon {
+				width: 56px;
+				height: 56px;
+				position: relative;
+				display: grid;
+				place-items: center;
+				border-radius: 9999px;
+				background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+				backdrop-filter: blur(6px) saturate(120%);
+				-webkit-backdrop-filter: blur(6px) saturate(120%);
+				border: 1px solid rgba(255,255,255,0.04);
+				box-shadow: 0 6px 18px rgba(2,6,15,0.55), inset 0 1px 0 rgba(255,255,255,0.02);
+				color: #cfe9ff;
+				transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+			}
+
+			/* subtle halo + inner ring for depth */
+			.control-icon::before {
+				content: "";
+				position: absolute;
+				inset: -8px;
+				border-radius: 9999px;
+				background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 40%);
+				opacity: 0.6;
+				filter: blur(6px);
+				pointer-events: none;
+			}
+
+			.control-icon::after {
+				content: "";
+				position: absolute;
+				inset: 6px;
+				border-radius: 9999px;
+				border: 1px solid rgba(255,255,255,0.03);
+				pointer-events: none;
+			}
+
+			/* place icons just INSIDE the circle perimeter with consistent offsets */
+			.icon-top { position: absolute; top: 6%; left: 50%; transform: translate(-50%, -50%); }
+			.icon-top-right { position: absolute; top: 22%; right: 6%; transform: translate(50%, -50%); }
+			.icon-right { position: absolute; top: 50%; right: 6%; transform: translate(50%, -50%); }
+			.icon-bottom { position: absolute; bottom: 6%; left: 50%; transform: translate(-50%, 50%); }
+			.icon-left { position: absolute; top: 50%; left: 6%; transform: translate(-50%, -50%); }
+			.icon-top-left { position: absolute; top: 22%; left: 6%; transform: translate(-50%, -50%); }
+			.inner-ring { box-shadow: 0 0 120px rgba(59,130,246,0.08) inset; }
+
+			/* orbit ring to place icons evenly around the circle */
+			:root { --icon-offset: 12px; }
+			.icon-ring { position:absolute; inset:0; pointer-events:none; z-index: 15; }
+			.icon-polar { position:absolute; top:50%; left:50%; transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(-1 * var(--icon-r))) rotate(calc(-1 * var(--a))); pointer-events:auto; }
+
+			/* transcript panel styling */
+			.transcript-panel {
+				position: absolute;
+				top: clamp(16%, 18%, 22%);
+				right: clamp(1.5rem, 4vw, 3.5rem);
+				width: min(420px, 32vw);
+				max-height: 62vh;
+				display: flex;
+				flex-direction: column;
+				gap: 1.5rem;
+				padding: 2rem 1.8rem;
+				border-radius: 1.5rem;
+				background: linear-gradient(160deg, rgba(9,18,36,0.92) 0%, rgba(4,11,24,0.94) 52%, rgba(1,4,12,0.98) 100%);
+				border: 1px solid rgba(148, 163, 184, 0.15);
+				box-shadow: 0 18px 60px rgba(2,8,23,0.55), inset 0 1px 0 rgba(148,163,184,0.08);
+				backdrop-filter: blur(18px) saturate(150%);
+				-webkit-backdrop-filter: blur(18px) saturate(150%);
+				z-index: 35;
+				pointer-events: auto;
+			}
+
+			.transcript-panel::after {
+				content: "";
+				position: absolute;
+				top: 18px;
+				right: 18px;
+				left: 18px;
+				bottom: 18px;
+				border-radius: 1.25rem;
+				border: 1px solid rgba(59,130,246,0.08);
+				pointer-events: none;
+			}
+
+			.transcript-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1.2rem;
+				position: relative;
+				z-index: 1;
+			}
+
+			.transcript-header h2 {
+				font-size: 1rem;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				color: #e2e8f0;
+			}
+
+			.transcript-clock {
+				display: flex;
+				flex-direction: column;
+				align-items: flex-end;
+				gap: 0.2rem;
+				padding: 0.35rem 0.75rem;
+				border-radius: 999px;
+				background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(59,130,246,0.08));
+				border: 1px solid rgba(96,165,250,0.35);
+				box-shadow: 0 8px 24px rgba(15,23,42,0.35);
+				font-size: 0.75rem;
+				text-transform: uppercase;
+				letter-spacing: 0.12em;
+				color: #cbd5f5;
+			}
+
+			.clock-label {
+				font-weight: 600;
+				color: rgba(226, 232, 240, 0.85);
+			}
+
+			.clock-time {
+				font-family: "Fira Code", "SFMono-Regular", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+				font-size: 0.82rem;
+				color: rgba(226, 232, 240, 0.95);
+			}
+
+			.transcript-body {
+				position: relative;
+				flex: 1 1 auto;
+				overflow-y: auto;
+				padding-right: 0.5rem;
+				display: flex;
+				flex-direction: column;
+				gap: 1.1rem;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(148,163,184,0.35) transparent;
+				z-index: 1;
+			}
+
+			.transcript-body::-webkit-scrollbar {
+				width: 6px;
+			}
+
+			.transcript-body::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			.transcript-body::-webkit-scrollbar-thumb {
+				background: rgba(148,163,184,0.28);
+				border-radius: 999px;
+			}
+
+			.transcript-line {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				gap: 0.7rem;
+				padding: 1.1rem 1.2rem;
+				border-radius: 0.75rem;
+				background: linear-gradient(135deg, rgba(30,41,59,0.4) 0%, rgba(15,23,42,0.5) 100%);
+				border: 1px solid rgba(148,163,184,0.12);
+				backdrop-filter: blur(8px);
+				transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+				animation: slideIn 0.4s ease-out;
+			}
+
+			.transcript-line:hover {
+				background: linear-gradient(135deg, rgba(30,41,59,0.6) 0%, rgba(15,23,42,0.7) 100%);
+				border-color: rgba(96,165,250,0.3);
+				transform: translateX(-2px);
+				box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+			}
+
+			.transcript-line.corrected {
+				border-left: 3px solid rgba(34,197,94,0.6);
+				background: linear-gradient(135deg, rgba(6,78,59,0.25) 0%, rgba(4,47,46,0.3) 100%);
+			}
+
+			.transcript-line.corrected:hover {
+				background: linear-gradient(135deg, rgba(6,78,59,0.35) 0%, rgba(4,47,46,0.4) 100%);
+				border-left-color: rgba(34,197,94,0.8);
+			}
+
+			@keyframes slideIn {
+				from {
+					opacity: 0;
+					transform: translateY(10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.transcript-header-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.8rem;
+			}
+
+			.transcript-time {
+				font-family: "Fira Code", "SFMono-Regular", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+				font-size: 0.7rem;
+				color: rgba(148,163,184,0.65);
+				white-space: nowrap;
+				letter-spacing: 0.02em;
+			}
+
+			.transcript-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				padding: 0.2rem 0.5rem;
+				border-radius: 999px;
+				font-size: 0.65rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			.transcript-badge.corrected {
+				background: rgba(34,197,94,0.15);
+				color: rgba(134,239,172,0.95);
+				border: 1px solid rgba(34,197,94,0.3);
+			}
+
+			.transcript-badge.original {
+				background: rgba(59,130,246,0.15);
+				color: rgba(147,197,253,0.95);
+				border: 1px solid rgba(59,130,246,0.3);
+			}
+
+			.transcript-badge.disfluent {
+				background: rgba(251,146,60,0.15);
+				color: rgba(253,186,116,0.95);
+				border: 1px solid rgba(251,146,60,0.3);
+			}
+
+			.transcript-badge.metrics {
+				background: rgba(168,85,247,0.15);
+				color: rgba(216,180,254,0.95);
+				border: 1px solid rgba(168,85,247,0.3);
+			}
+
+			.transcript-line.disfluent {
+				border-left: 3px solid rgba(251,146,60,0.5);
+				background: rgba(251,146,60,0.05);
+			}
+
+			.transcript-line.metrics {
+				border-left: 3px solid rgba(168,85,247,0.5);
+				background: rgba(168,85,247,0.05);
+				font-size: 0.85rem;
+			}
+
+			.transcript-line.metrics .transcript-text {
+				font-family: 'JetBrains Mono', monospace;
+				font-size: 0.8rem;
+				color: rgba(216,180,254,0.85);
+			}
+
+			.transcript-text {
+				word-break: break-word;
+				font-size: 0.92rem;
+				line-height: 1.7;
+				color: rgba(226, 232, 240, 0.95);
+				margin-top: 0.3rem;
+				letter-spacing: 0.01em;
+			}
+
+			.transcript-placeholder {
+				font-size: 0.88rem;
+				color: rgba(148, 163, 184, 0.6);
+				padding: 0.4rem 0;
+			}
+
+			.transcript-interim {
+				min-height: 1.4rem;
+				font-size: 0.88rem;
+				font-style: italic;
+				color: rgba(148,163,184,0.9);
+				letter-spacing: 0.02em;
+				z-index: 1;
+				padding: 1rem 1.2rem;
+				border-radius: 0.75rem;
+				background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(37,99,235,0.05) 100%);
+				border: 1px dashed rgba(59,130,246,0.3);
+				line-height: 1.6;
+				animation: pulse 2s ease-in-out infinite;
+			}
+
+			@keyframes pulse {
+				0%, 100% {
+					opacity: 1;
+					border-color: rgba(59,130,246,0.3);
+				}
+				50% {
+					opacity: 0.8;
+					border-color: rgba(59,130,246,0.5);
+				}
+			}
+
+			.transcript-panel.active .transcript-clock {
+				background: linear-gradient(135deg, rgba(248,113,113,0.3), rgba(248,113,113,0.08));
+				border-color: rgba(248,113,113,0.45);
+				color: rgba(254, 226, 226, 0.88);
+			}
+
+			.transcript-panel.active .clock-label {
+				color: rgba(254, 226, 226, 0.9);
+			}
+
+			@media (max-width: 1280px) {
+				.transcript-panel {
+					top: 22%;
+					right: clamp(1rem, 4vw, 2.5rem);
+					width: min(360px, 38vw);
+				}
+			}
+
+			@media (max-width: 1024px) {
+				.transcript-panel {
+					position: static;
+					width: min(92vw, 460px);
+					max-height: none;
+					margin: 2.75rem auto 0;
+				}
+				.transcript-panel::after {
+					display: none;
+				}
+			}
+
+			@media (max-width: 640px) {
+				.transcript-panel {
+					padding: 1.1rem 1.1rem;
+					gap: 0.75rem;
+				}
+				.transcript-header {
+					flex-direction: column;
+					align-items: flex-start;
+				}
+				.transcript-clock {
+					align-items: flex-start;
+					width: 100%;
+				}
+				.transcript-line {
+					grid-template-columns: 1fr;
+					gap: 0.35rem;
+				}
+				.transcript-time {
+					font-size: 0.74rem;
+				}
+			}
+		</style>
+	</head>
+	<body class="min-h-screen bg-black text-white">
+		<!-- particles background (twinkling stars + shooting stars) -->
+		<div id="tsparticles" class="pointer-events-none absolute inset-0 -z-30"></div>
+		<main
+			id="hero"
+			class="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-black"
+		>
+			<!-- top navigation (non-intrusive glass bar with links and widgets) -->
+			<nav class="absolute top-6 left-6 right-6 z-50 flex items-center pointer-events-auto">
+				<div class="top-bar flex items-center justify-between w-full bg-white/3 px-3 py-1 rounded-full shadow-sm">
+					<div class="left-group flex items-center gap-3">
+						<div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 flex items-center justify-center text-white font-semibold">S</div>
+						<div class="ml-2 text-sm text-white/90 font-medium">AI SpeechAssist</div>
+								<div class="hidden sm:flex items-center gap-6 ml-3">
+							<a href="#" id="homeLink" class="text-xs text-slate-100 hover:underline">Home</a>
+							<button id="historyBtn" class="text-xs text-slate-100">History</button>
+							
+							<button id="helpBtn" class="text-xs text-slate-100">Help</button>
+						</div>
+					</div>
+
+					<div class="right-group flex items-center gap-2">
+						<select id="langSelect" class="bg-white/4 text-xs text-white/90 px-2 py-1 rounded-md">
+							<option value="en" selected>English</option>
+						
+						</select>
+						<select id="voiceSelect" class="bg-white/4 text-xs text-white/90 px-2 py-1 rounded-md">
+							<option value="female">Female</option>
+							<option value="male">Male</option>
+						</select>
+						<button id="accessBtn" class="ml-1 px-2 py-1 rounded-md bg-white/6 text-xs text-slate-100">{{request.user.username}}</button>
+					</div>
+				</div>
+			</nav>
+
+			<!-- History modal (hidden by default) -->
+			<div id="historyModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6" style="z-index:99999; pointer-events:auto;">
+				<div class="w-full max-w-3xl bg-gradient-to-br from-[#0a1929]/95 to-[#000]/95 rounded-2xl p-6 shadow-2xl border border-slate-700/50">
+					<div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/50">
+						<div class="flex items-center gap-3">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-400">
+								<path d="M3 3h18v18H3z"></path>
+								<path d="M8 7h8M8 12h8M8 17h8"></path>
+							</svg>
+							<h2 class="font-semibold text-lg text-slate-100">Speech History</h2>
+						</div>
+						<button id="closeHistory" class="px-3 py-1 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 text-sm transition-colors">Close</button>
+					</div>
+					<div id="historyList" style="max-height:60vh;overflow-y:auto;" class="space-y-3 pr-2">
+						<!-- history items injected here -->
+					</div>
+					<div class="mt-4 pt-3 border-t border-slate-700/50 flex justify-between items-center">
+						<div class="text-xs text-slate-400">
+							<span id="historyCount">0</span> entries total
+						</div>
+						<button id="clearHistory" class="px-4 py-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-sm transition-colors">Clear All</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Chat Room Modal -->
+			<div id="chatModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" style="z-index:99999; pointer-events:auto;">
+				<div class="w-full max-w-4xl h-[85vh] bg-gradient-to-br from-[#0a1929]/98 to-[#000]/98 rounded-2xl shadow-2xl border border-slate-700/50 flex flex-col overflow-hidden">
+					<!-- Chat Header -->
+					<div class="flex items-center justify-between p-4 border-b border-slate-700/50 bg-slate-900/50">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+							</div>
+							<div>
+								<h2 id="chatRoomTitle" class="font-semibold text-lg text-slate-100">Chat Room</h2>
+								<div class="text-xs text-slate-400">
+									<span id="chatRoomCode" class="font-mono bg-slate-800 px-2 py-0.5 rounded">------</span>
+									<span id="chatParticipantCount" class="ml-2">0 online</span>
+								</div>
+							</div>
+						</div>
+						<div class="flex items-center gap-2">
+							<button id="leaveChatRoom" class="hidden px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-sm transition-colors">Leave</button>
+							<button id="closeChatModal" class="px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-200 text-sm transition-colors">Close</button>
+						</div>
+					</div>
+					
+					<!-- Chat Content Area -->
+					<div id="chatContentArea" class="flex-1 flex overflow-hidden">
+						<!-- Room Selection Panel (shown when not in a room) -->
+						<div id="roomSelectionPanel" class="flex-1 flex flex-col items-center justify-center p-8 gap-6">
+							<div class="text-center mb-4">
+								<h3 class="text-2xl font-bold text-white mb-2">Welcome to Chat Rooms</h3>
+								<p class="text-slate-400 text-sm">Practice speaking with others in real-time with disfluency correction</p>
+							</div>
+							
+							<div class="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+								<!-- Create Room -->
+								<div class="flex-1 p-6 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-600/20 border border-purple-500/30 hover:border-purple-400/50 transition-colors cursor-pointer group" id="createRoomCard">
+									<div class="w-12 h-12 rounded-full bg-purple-500/30 flex items-center justify-center mb-4 group-hover:bg-purple-500/40 transition-colors">
+										<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-300"><path d="M12 5v14M5 12h14"></path></svg>
+									</div>
+									<h4 class="font-semibold text-white mb-1">Create Room</h4>
+									<p class="text-xs text-slate-400">Start a new chat room and invite others</p>
+								</div>
+								
+								<!-- Join Room -->
+								<div class="flex-1 p-6 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-600/20 border border-green-500/30 hover:border-green-400/50 transition-colors cursor-pointer group" id="joinRoomCard">
+									<div class="w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center mb-4 group-hover:bg-green-500/40 transition-colors">
+										<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green-300"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"></path></svg>
+									</div>
+									<h4 class="font-semibold text-white mb-1">Join Room</h4>
+									<p class="text-xs text-slate-400">Enter a room code to join existing chat</p>
+								</div>
+							</div>
+							
+							<!-- Recent Rooms -->
+							<div class="w-full max-w-md mt-4">
+								<h4 class="text-sm font-medium text-slate-300 mb-3">Your Recent Rooms</h4>
+								<div id="recentRoomsList" class="space-y-2 max-h-40 overflow-y-auto">
+									<div class="text-xs text-slate-500 text-center py-4">No recent rooms</div>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Create Room Form -->
+						<div id="createRoomForm" class="hidden flex-1 flex flex-col items-center justify-center p-8">
+							<div class="w-full max-w-sm">
+								<button id="backFromCreate" class="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+									Back
+								</button>
+								<h3 class="text-xl font-bold text-white mb-6">Create New Room</h3>
+								<div class="space-y-4">
+									<div>
+										<label class="block text-sm text-slate-300 mb-2">Room Name</label>
+										<input type="text" id="newRoomName" placeholder="My Chat Room" class="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors">
+									</div>
+									<div>
+										<label class="block text-sm text-slate-300 mb-2">Language</label>
+										<select id="newRoomLanguage" class="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white focus:outline-none focus:border-purple-500 transition-colors">
+											<option value="en">English</option>
+											<option value="hi">हिन्दी (Hindi)</option>
+											<option value="ml">മലയാളം (Malayalam)</option>
+											<option value="es">Español (Spanish)</option>
+										</select>
+									</div>
+									<button id="createRoomSubmit" class="w-full py-3 rounded-lg bg-gradient-to-r from-purple-500 to-blue-600 text-white font-semibold hover:from-purple-600 hover:to-blue-700 transition-all">
+										Create Room
+									</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Join Room Form -->
+						<div id="joinRoomForm" class="hidden flex-1 flex flex-col items-center justify-center p-8">
+							<div class="w-full max-w-sm">
+								<button id="backFromJoin" class="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+									Back
+								</button>
+								<h3 class="text-xl font-bold text-white mb-6">Join Room</h3>
+								<div class="space-y-4">
+									<div>
+										<label class="block text-sm text-slate-300 mb-2">Room Code</label>
+										<input type="text" id="joinRoomCode" placeholder="ABCD12" maxlength="6" class="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-green-500 transition-colors text-center font-mono text-xl tracking-widest uppercase">
+									</div>
+									<button id="joinRoomSubmit" class="w-full py-3 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold hover:from-green-600 hover:to-teal-700 transition-all">
+										Join Room
+									</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Active Chat Panel -->
+						<div id="activeChatPanel" class="hidden flex-1 flex flex-col">
+							<!-- Messages Area -->
+							<div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3">
+								<!-- Messages will be injected here -->
+							</div>
+							
+							<!-- Typing Indicator -->
+							<div id="typingIndicator" class="hidden px-4 py-2 text-xs text-slate-400 italic">
+								<span id="typingUser"></span> is typing...
+							</div>
+							
+							<!-- Message Input -->
+							<div class="p-4 border-t border-slate-700/50 bg-slate-900/30">
+								<div class="flex items-center gap-3">
+									<div class="flex-1 relative">
+										<input type="text" id="chatMessageInput" placeholder="Type your message... (disfluencies will be auto-corrected)" class="w-full px-4 py-3 pr-12 rounded-xl bg-slate-800/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors">
+										<button id="voiceInputBtn" class="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white" title="Voice input">
+											<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M5 11a1 1 0 1 0-2 0 9 9 0 0 0 8 8.94V22a1 1 0 1 0 2 0v-2.06A9 9 0 0 0 21 11a1 1 0 1 0-2 0 7 7 0 0 1-14 0Z"/></svg>
+										</button>
+									</div>
+									<button id="sendMessageBtn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2">
+										<span>Send</span>
+										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+									</button>
+								</div>
+								<div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+									<span>💡 Tip: Your messages are auto-corrected for disfluencies before sending</span>
+									<span id="chatLanguageIndicator">🌐 English</span>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Participants Sidebar (visible in active chat) -->
+						<div id="participantsSidebar" class="hidden w-64 border-l border-slate-700/50 bg-slate-900/30 p-4">
+							<h4 class="font-semibold text-white mb-3 flex items-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+								Participants
+							</h4>
+							<div id="participantsList" class="space-y-2">
+								<!-- Participants will be injected here -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="relative flex items-center justify-center">
+				<!-- circular shell (kept perfectly square via aspect-ratio) -->
+				<div class="circle-shell relative rounded-full flex items-center justify-center">
+					<div class="circle-backdrop absolute inset-0 rounded-full bg-gradient-to-br from-[#02141e] to-[#000] shadow-[inset_0_-30px_80px_rgba(0,0,0,0.75)]"></div>
+
+					<!-- inner video circle (keeps the video inside a perfect circle) -->
+					<div class="video-container relative" style="width:86%;aspect-ratio:1/1;border-radius:9999px;overflow:hidden;z-index:10;">
+						<video id="glowVideo" src="{% static 'video/bg_video.mp4' %}" autoplay loop muted playsinline class="h-full w-full object-cover"></video>
+						<div class="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/10 via-transparent to-black/60 pointer-events-none"></div>
+						<div class="inner-ring absolute inset-[8%] rounded-full border border-blue-400/25 pointer-events-none"></div>
+					</div>
+
+										<!-- evenly spaced icon ring -->
+										<div class="icon-ring" aria-hidden="true">
+											  <div class="icon-polar" style="--a: 0deg;">
+												<button class="control-icon" title="Expand">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4h6M4 4v6M20 20h-6M20 20v-6" /></svg>
+												</button>
+											</div>
+											  <div class="icon-polar" style="--a: 60deg;">
+												<button class="control-icon" title="Settings">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 4.28 16.9l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82L4.21 6.8A2 2 0 1 1 7 3.97l.06.06a1.65 1.65 0 0 0 1.82.33H9A1.65 1.65 0 0 0 10 3.8V3a2 2 0 1 1 4 0v.09c.08.58.39 1.12 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 1 1 19.4 7l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.39.61.9.8 1.51 1H21a2 2 0 1 1 0 4h-.09c-.61.08-1.12.39-1.51 1z"/></svg>
+												</button>
+											</div>
+											  <div class="icon-polar" style="--a: 120deg;">
+												<button class="control-icon" title="Levels">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v18M6 8v6M18 6v10" /></svg>
+												</button>
+											</div>
+											  <div class="icon-polar" style="--a: 180deg;">
+												<button class="control-icon" title="Share">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v12" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7l4-4 4 4" /></svg>
+												</button>
+											</div>
+											  <div class="icon-polar" style="--a: 240deg;">
+												<button class="control-icon" title="History">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3M21 12a9 9 0 1 1-3.2-6.6"/></svg>
+												</button>
+											</div>
+											  <div class="icon-polar" style="--a: 300deg;">
+												<button class="control-icon" title="Info">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+												</button>
+											</div>
+										</div>
+
+					<!-- center mic button (enlarged) -->
+					<button id="micButton" type="button" aria-label="Toggle listening state" aria-pressed="false" class="absolute z-20 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-blue-500/60 to-blue-600/40 text-white transition-all duration-300 ease-out hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-400/60 shadow-[0_0_36px_rgba(59,130,246,0.45)]">
+						<svg id="micIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-12 w-12 drop-shadow-[0_0_14px_rgba(59,130,246,0.75)]" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M5 11a1 1 0 1 0-2 0 9 9 0 0 0 8 8.94V22a1 1 0 1 0 2 0v-2.06A9 9 0 0 0 21 11a1 1 0 1 0-2 0 7 7 0 0 1-14 0Z"/></svg>
+					</button>
+				</div>
+			</div>
+
+			<p
+				id="statusText"
+				class="mt-12 text-lg font-medium tracking-wide text-slate-200"
+			>
+				Tap to speak
+			</p>
+
+			<aside id="transcriptPanel" class="transcript-panel">
+				<div class="transcript-header">
+					<h2>Live Transcript</h2>
+					<div class="transcript-clock" id="transcriptClock">
+						<span class="clock-label" id="transcriptClockLabel">Standby</span>
+						<span class="clock-time" id="transcriptClockTime">--:--:--</span>
+					</div>
+				</div>
+				<div id="transcriptBody" class="transcript-body">
+					<div class="transcript-placeholder">Your words will appear here after you start speaking.</div>
+				</div>
+				<div id="transcriptInterim" class="transcript-interim"></div>
+			</aside>
+
+			<div
+				class="pointer-events-none absolute bottom-10 flex w-full max-w-4xl justify-center gap-2"
+			>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+				<span class="wave-bar"></span>
+			</div>
+		</main>
+
+		<script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				const hero = document.getElementById("hero");
+				const micButton = document.getElementById("micButton");
+				const statusText = document.getElementById("statusText");
+				const shell = document.querySelector('.circle-shell');
+				const root = document.documentElement;
+				const transcriptPanel = document.getElementById("transcriptPanel");
+				const transcriptBody = document.getElementById("transcriptBody");
+				const transcriptInterim = document.getElementById("transcriptInterim");
+				const transcriptClockLabel = document.getElementById("transcriptClockLabel");
+				const transcriptClockTime = document.getElementById("transcriptClockTime");
+				const langSelect = document.getElementById('langSelect');
+				const voiceSelect = document.getElementById('voiceSelect');
+
+				let isListening = false;
+				let pendingStart = false;
+				let micPermissionGranted = false;
+				let transcriptEntries = [];
+				let transcriptTicker = null;
+				let currentAudio = null;  // Track currently playing audio
+				let audioContext = null;
+				let analyser = null;
+				let microphone = null;
+				let currentSessionText = '';  // Accumulate speech during a session
+				const placeholderHtml = '<div class="transcript-placeholder">Your words will appear here after you start speaking.</div>';
+
+				const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+				let recognition = null;
+
+				const escapeHtml = (value = "") => value
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;")
+					.replace(/"/g, "&quot;")
+					.replace(/'/g, "&#039;");
+
+				const formatTime = (date) => {
+					if (!date) return "--:--:--";
+					return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+				};
+
+				const setClock = (label, date) => {
+					if (!transcriptClockLabel || !transcriptClockTime) return;
+					transcriptClockLabel.textContent = label;
+					transcriptClockTime.textContent = formatTime(date);
+				};
+
+				const startClock = () => {
+					const now = new Date();
+					setClock('LIVE', now);
+					if (transcriptTicker) clearInterval(transcriptTicker);
+					transcriptTicker = setInterval(() => setClock('LIVE', new Date()), 1000);
+				};
+
+				const stopClock = () => {
+					if (transcriptTicker) clearInterval(transcriptTicker);
+					transcriptTicker = null;
+					setClock('Last update', new Date());
+				};
+
+				const resetClock = () => {
+					if (transcriptTicker) clearInterval(transcriptTicker);
+					transcriptTicker = null;
+					setClock('Standby', null);
+				};
+
+				const markPanelActive = (active) => {
+					if (!transcriptPanel) return;
+					transcriptPanel.classList.toggle('active', active);
+				};
+
+				const renderTranscript = () => {
+					if (!transcriptBody) return;
+					if (!transcriptEntries.length) {
+						transcriptBody.innerHTML = placeholderHtml;
+						markPanelActive(isListening);
+						return;
+					}
+
+					const content = transcriptEntries
+						.slice(-15)
+						.map((entry) => {
+							const type = entry.type || 'default';
+							let displayText = entry.text;
+							let lineClass = 'transcript-line';
+							let badge = '';
+							
+							if (type === 'original' || entry.text.startsWith('🎤')) {
+								displayText = displayText.replace('🎤 Original: ', '');
+								lineClass = 'transcript-line disfluent';
+								badge = '<span class="transcript-badge disfluent"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>Disfluent</span>';
+							} else if (type === 'metrics' || entry.text.startsWith('📊')) {
+								displayText = displayText.replace('📊 ', '');
+								lineClass = 'transcript-line metrics';
+								badge = '<span class="transcript-badge metrics"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>Analysis</span>';
+							} else if (type === 'corrected' || entry.text.startsWith('✅') || entry.text.startsWith('✓')) {
+								displayText = displayText.replace('✅ Fluent: ', '').replace('✓ Corrected: ', '');
+								lineClass = 'transcript-line corrected';
+								badge = '<span class="transcript-badge corrected"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Fluent</span>';
+							} else {
+								badge = '<span class="transcript-badge original">Speech</span>';
+							}
+							
+							return `
+								<div class="${lineClass}">
+									<div class="transcript-header-row">
+										<span class="transcript-time">${formatTime(entry.time)}</span>
+										${badge}
+									</div>
+									<div class="transcript-text">${escapeHtml(displayText)}</div>
+								</div>
+							`;
+						})
+						.join('');
+
+					transcriptBody.innerHTML = content;
+					transcriptBody.scrollTop = transcriptBody.scrollHeight;
+					markPanelActive(true);
+				};
+
+				const setInterimText = (text) => {
+					if (!transcriptInterim) return;
+					const trimmed = (text || '').trim();
+					if (!trimmed) {
+						transcriptInterim.textContent = '';
+						return;
+					}
+					transcriptInterim.textContent = `… ${trimmed}`;
+				};
+
+				// Process disfluent speech with correction and TTS
+				const processSpeechWithTTS = async (text) => {
+					if (!text || !text.trim()) return;
+					
+					try {
+						// Stop any currently playing audio
+						if (currentAudio) {
+							currentAudio.pause();
+							currentAudio = null;
+						}
+
+						statusText.textContent = 'Analyzing disfluent speech...';
+						
+						const response = await fetch('/api/process-speech-tts/', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({ 
+								text: text.trim(),
+								language: langSelect?.value || 'en',
+								gender: voiceSelect?.value || 'female'
+							})
+						});
+
+						const data = await response.json();
+
+						if (data.success) {
+							// Show disfluency analysis in transcript
+							if (data.has_corrections) {
+								// Add original disfluent text
+								transcriptEntries.push({ 
+									text: `🎤 Original: ${data.original_text}`, 
+									time: new Date(),
+									type: 'original'
+								});
+								
+								// Add metrics if available
+								if (data.metrics && data.metrics.disfluencies_removed > 0) {
+									transcriptEntries.push({ 
+										text: `📊 Disfluencies removed: ${data.metrics.disfluencies_removed} | Words: ${data.metrics.original_word_count} → ${data.metrics.corrected_word_count}`, 
+										time: new Date(),
+										type: 'metrics'
+									});
+								}
+								
+								// Add corrected fluent text
+								transcriptEntries.push({ 
+									text: `✅ Fluent: ${data.corrected_text}`, 
+									time: new Date(),
+									type: 'corrected'
+								});
+								
+								renderTranscript();
+							}
+
+							// Play the corrected fluent speech
+							if (data.corrected_audio) {
+								statusText.textContent = 'Playing fluent speech...';
+								statusText.classList.add('text-green-400');
+								
+								const audioBlob = base64ToBlob(data.corrected_audio, 'audio/mpeg');
+								const audioUrl = URL.createObjectURL(audioBlob);
+								currentAudio = new Audio(audioUrl);
+								
+								await currentAudio.play();
+								
+								// Wait for audio to finish
+								await new Promise((resolve) => {
+									currentAudio.onended = resolve;
+								});
+							}
+
+							statusText.textContent = 'Tap to speak';
+							statusText.classList.remove('text-green-400');
+							currentAudio = null;
+						} else {
+							console.error('Speech processing failed:', data.error);
+							statusText.textContent = 'Error processing speech';
+						}
+					} catch (error) {
+						console.error('Error calling TTS API:', error);
+						statusText.textContent = 'Error with speech processing';
+					}
+				};
+
+				// Helper function to convert base64 to Blob
+				const base64ToBlob = (base64, mimeType) => {
+					const byteCharacters = atob(base64);
+					const byteNumbers = new Array(byteCharacters.length);
+					for (let i = 0; i < byteCharacters.length; i++) {
+						byteNumbers[i] = byteCharacters.charCodeAt(i);
+					}
+					const byteArray = new Uint8Array(byteNumbers);
+					return new Blob([byteArray], { type: mimeType });
+				};
+
+				const setListeningVisual = (active) => {
+					isListening = active;
+					hero.classList.toggle("listening", active);
+					micButton.classList.toggle('listening', active);
+					micButton.setAttribute("aria-pressed", String(active));
+
+					if (active) {
+						statusText.textContent = "Listening...";
+						statusText.classList.add("text-rose-200");
+						statusText.classList.remove("text-slate-200");
+						statusText.classList.remove("text-amber-300");
+						markPanelActive(true);
+					} else {
+						statusText.textContent = "Tap to speak";
+						statusText.classList.remove("text-rose-200");
+						statusText.classList.add("text-slate-200");
+						statusText.classList.remove("text-amber-300");
+						markPanelActive(transcriptEntries.length > 0);
+					}
+				};
+
+				const ensureMicPermission = async () => {
+					if (micPermissionGranted) return true;
+					if (!navigator?.mediaDevices?.getUserMedia) {
+						console.warn('getUserMedia not supported');
+						micPermissionGranted = true;
+						return true;
+					}
+					try {
+						console.log('Requesting microphone access...');
+						const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+						console.log('Microphone access granted, stream:', stream);
+						
+						// Set up audio context to monitor microphone activity
+						try {
+							audioContext = new (window.AudioContext || window.webkitAudioContext)();
+							analyser = audioContext.createAnalyser();
+							microphone = audioContext.createMediaStreamSource(stream);
+							microphone.connect(analyser);
+							analyser.fftSize = 256;
+							console.log('Audio analyser set up successfully');
+						} catch (audioErr) {
+							console.warn('Could not set up audio analyser:', audioErr);
+						}
+						
+						// Don't stop the tracks - keep them for speech recognition
+						// stream.getTracks().forEach((track) => track.stop());
+						micPermissionGranted = true;
+						return true;
+					} catch (err) {
+						console.error('Microphone permission denied', err);
+						statusText.textContent = 'Microphone permission denied. Please allow access.';
+						statusText.classList.remove('text-rose-200');
+						statusText.classList.remove('text-slate-200');
+						statusText.classList.add('text-amber-300');
+						return false;
+					}
+				};
+
+				const mapLanguage = (value = 'en') => {
+					switch (value) {
+						case 'en':
+							return 'en-US';
+						case 'es':
+							return 'es-ES';
+						case 'hi':
+							return 'hi-IN';
+						case 'ml':
+							return 'ml-IN';
+						default:
+							return value;
+					}
+				};
+
+				const finalizeClock = () => {
+					if (transcriptEntries.length) {
+						stopClock();
+					} else {
+						resetClock();
+					}
+				};
+
+				resetClock();
+				renderTranscript();
+
+				if (SpeechRecognition) {
+					recognition = new SpeechRecognition();
+					recognition.continuous = true;
+					recognition.interimResults = true;
+					recognition.lang = mapLanguage(langSelect?.value || 'en');
+					recognition.maxAlternatives = 1;
+
+				recognition.onstart = () => {
+					console.log('Speech recognition started');
+					pendingStart = false;
+					micButton.disabled = false;
+					setInterimText('');
+					currentSessionText = '';  // Reset session text
+					setListeningVisual(true);
+					startClock();
+				};					recognition.onresult = (event) => {
+						console.log('Speech recognition result received', event);
+						let interim = '';
+						let finalText = '';
+						
+						for (let i = event.resultIndex; i < event.results.length; i += 1) {
+							const result = event.results[i];
+							const transcript = result[0].transcript;
+
+							console.log(`Result ${i}: "${transcript}", isFinal: ${result.isFinal}`);
+
+							if (result.isFinal) {
+								finalText += transcript + ' ';
+							} else {
+								interim += transcript + ' ';
+							}
+						}
+
+						// Accumulate final text to session
+						if (finalText.trim()) {
+							currentSessionText += finalText;
+							console.log('Accumulated session text:', currentSessionText);
+						}
+
+						// Show current accumulated text + interim in the interim display
+						const displayText = currentSessionText + interim;
+						setInterimText(displayText.trim());
+					};
+
+				recognition.onerror = (event) => {
+					console.error('Speech recognition error', event.error, event);
+					pendingStart = false;
+					micButton.disabled = false;
+					setListeningVisual(false);
+					
+					// More specific error messages
+					let errorMsg = 'Microphone error — check permissions.';
+					if (event.error === 'no-speech') {
+						errorMsg = 'No speech detected. Please try again.';
+						// Auto-restart on no-speech
+						setTimeout(() => {
+							statusText.textContent = 'Tap to speak';
+							statusText.classList.remove('text-amber-300');
+							statusText.classList.add('text-slate-200');
+						}, 2000);
+					} else if (event.error === 'not-allowed') {
+						errorMsg = 'Microphone access denied. Please enable microphone permissions.';
+					} else if (event.error === 'network') {
+						errorMsg = 'Network error. Check your internet connection.';
+					}
+					
+					statusText.textContent = errorMsg;
+					statusText.classList.remove('text-slate-200');
+					statusText.classList.remove('text-rose-200');
+					statusText.classList.add('text-amber-300');
+					setInterimText('');
+					finalizeClock();
+				};
+
+				recognition.onend = () => {
+					pendingStart = false;
+					micButton.disabled = false;
+					setListeningVisual(false);
+					setInterimText('');
+					finalizeClock();
+					
+					// Add accumulated session text as a single entry and process it
+					if (currentSessionText.trim()) {
+						const normalised = currentSessionText.replace(/\s+/g, ' ').trim();
+						transcriptEntries.push({ text: normalised, time: new Date() });
+						renderTranscript();
+						
+						console.log('Processing session text for TTS:', normalised);
+						processSpeechWithTTS(normalised);
+					}
+					
+					// Reset session text
+					currentSessionText = '';
+				};
+				} else {
+					statusText.textContent = 'Speech recognition is not supported in this browser. Try Chrome.';
+					if (transcriptBody) {
+						transcriptBody.innerHTML = '<div class="transcript-placeholder">Speech recognition is not supported in this browser. Please open this page in Google Chrome.</div>';
+					}
+				}
+
+			micButton.addEventListener('click', async (event) => {
+				event.preventDefault();
+				
+				console.log('Mic button clicked, isListening:', isListening);
+				
+				if (!recognition) {
+					statusText.textContent = 'Speech recognition unsupported in this browser. Try Chrome.';
+					statusText.classList.remove('text-rose-200');
+					statusText.classList.add('text-amber-300');
+					return;
+				}
+
+				// Prevent double-clicks during processing
+				if (pendingStart) {
+					console.log('Pending start, ignoring click');
+					return;
+				}
+
+				if (!isListening) {
+					// START RECORDING
+					console.log('Starting speech recognition...');
+					pendingStart = true;
+					micButton.disabled = true;
+					statusText.textContent = 'Requesting microphone access…';
+					statusText.classList.remove('text-slate-200');
+					statusText.classList.remove('text-amber-300');
+					statusText.classList.add('text-rose-200');
+
+					const allowed = await ensureMicPermission();
+					console.log('Microphone permission:', allowed);
+					
+					if (!allowed) {
+						pendingStart = false;
+						micButton.disabled = false;
+						setListeningVisual(false);
+						finalizeClock();
+						return;
+					}
+
+					setInterimText('');
+					recognition.lang = mapLanguage(langSelect?.value || 'en');
+					console.log('Starting recognition with language:', recognition.lang);
+					
+					try {
+						recognition.start();
+						console.log('Recognition.start() called successfully');
+						// Note: onstart handler will reset pendingStart and enable button
+					} catch (err) {
+						pendingStart = false;
+						micButton.disabled = false;
+						console.error('Speech recognition start error', err);
+						setListeningVisual(false);
+						statusText.textContent = 'Unable to start speech recognition: ' + err.message;
+						statusText.classList.remove('text-rose-200');
+						statusText.classList.add('text-amber-300');
+						finalizeClock();
+					}
+				} else {
+					// STOP RECORDING
+					console.log('Stopping speech recognition...');
+					statusText.textContent = 'Processing...';
+					statusText.classList.remove('text-rose-200');
+					statusText.classList.remove('text-amber-300');
+					statusText.classList.add('text-slate-200');
+					micButton.disabled = true;
+					try {
+						recognition.stop();
+						console.log('Recognition.stop() called successfully');
+						// Note: onend handler will re-enable button
+					} catch (err) {
+						console.error('Speech recognition stop error', err);
+						micButton.disabled = false;
+						setListeningVisual(false);
+						finalizeClock();
+					}
+				}
+			});					// NAVBAR / WIDGETS: history modal, accessibility toggle, selectors
+					const historyBtn = document.getElementById('historyBtn');
+					const historyModal = document.getElementById('historyModal');
+					const closeHistory = document.getElementById('closeHistory');
+					const historyList = document.getElementById('historyList');
+					const clearHistory = document.getElementById('clearHistory');
+					const helpBtn = document.getElementById('helpBtn');
+					const accessBtn = document.getElementById('accessBtn');
+
+					let speechHistory = [];
+
+					// Fetch speech history from database
+					async function loadSpeechHistory() {
+						try {
+							const response = await fetch('/api/speech-history/');
+							const data = await response.json();
+							
+							if (data.success) {
+								speechHistory = data.history;
+								renderHistory();
+							} else {
+								console.error('Failed to load history:', data.error);
+							}
+						} catch (error) {
+							console.error('Error fetching history:', error);
+						}
+					}
+
+					function formatDate(dateStr) {
+						const date = new Date(dateStr);
+						const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+						const month = months[date.getMonth()];
+						const day = date.getDate();
+						const year = date.getFullYear();
+						const hours = String(date.getHours()).padStart(2, '0');
+						const minutes = String(date.getMinutes()).padStart(2, '0');
+						return `${month} ${day}, ${year} · ${hours}:${minutes}`;
+					}
+
+					function getLanguageFlag(lang) {
+						const flags = {
+							'en': '🇺🇸',
+							'hi': '🇮🇳',
+							'ml': '🇮🇳',
+							'es': '🇪🇸'
+						};
+						return flags[lang] || '🌐';
+					}
+
+					function renderHistory() {
+						const historyCount = document.getElementById('historyCount');
+						
+						if (!speechHistory.length) {
+							historyList.innerHTML = '<div class="text-slate-400 text-sm p-4 text-center">No speech history yet. Start speaking to create your first entry!</div>';
+							if (historyCount) historyCount.textContent = '0';
+							return;
+						}
+
+						if (historyCount) historyCount.textContent = speechHistory.length;
+
+						historyList.innerHTML = speechHistory.map(h => `
+							<div class="history-item p-3 rounded-xl bg-gradient-to-br from-slate-900/60 to-slate-800/40 shadow-md border border-slate-700/30">
+								<div class="flex items-center justify-between mb-2">
+									<div class="text-xs text-slate-400">${formatDate(h.created_at)}</div>
+									<div class="flex items-center gap-2">
+										<span class="text-xs">${getLanguageFlag(h.language)}</span>
+										${h.has_corrections ? '<span class="px-2 py-0.5 bg-green-500/20 text-green-300 text-xs rounded-full">Corrected</span>' : '<span class="px-2 py-0.5 bg-slate-500/20 text-slate-300 text-xs rounded-full">No Issues</span>'}
+									</div>
+								</div>
+								
+								<div class="space-y-2">
+									<div class="border-l-2 border-orange-400/50 pl-3 py-1 bg-orange-500/5 rounded">
+										<div class="text-xs text-orange-300 mb-1">🎤 Original:</div>
+										<div class="text-xs text-slate-300">${escapeHtml(h.original_text)}</div>
+									</div>
+									
+									${h.has_corrections ? `
+										<div class="border-l-2 border-green-400/50 pl-3 py-1 bg-green-500/5 rounded">
+											<div class="text-xs text-green-300 mb-1">✅ Fluent:</div>
+											<div class="text-sm text-white font-medium">${escapeHtml(h.corrected_text)}</div>
+										</div>
+										
+										${h.disfluencies_removed > 0 ? `
+											<div class="text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded">
+												📊 ${h.disfluencies_removed} disfluencies removed · ${h.original_word_count} → ${h.corrected_word_count} words
+											</div>
+										` : ''}
+									` : `
+										<div class="text-xs text-slate-400 italic">No disfluencies detected</div>
+									`}
+								</div>
+							</div>
+						`).join('');
+					}
+
+					// Load history on page load
+					loadSpeechHistory();
+
+					closeHistory.addEventListener('click', () => historyModal.classList.add('hidden'));
+
+					clearHistory.addEventListener('click', async () => {
+						if (confirm('Are you sure you want to clear all history? This cannot be undone.')) {
+							// TODO: Implement clear history endpoint if needed
+							speechHistory = [];
+							renderHistory();
+						}
+					});
+
+					helpBtn.addEventListener('click', () => alert('Help is a stub in this demo.'));
+
+					accessBtn.addEventListener('click', () => {
+						document.body.classList.toggle('a11y-high-contrast');
+						accessBtn.classList.toggle('bg-yellow-400/10');
+					});
+
+					// persist language & voice selection
+					langSelect.value = localStorage.getItem('as_lang') || 'en';
+					voiceSelect.value = localStorage.getItem('as_voice') || 'female';
+
+					langSelect.addEventListener('change', () => {
+						localStorage.setItem('as_lang', langSelect.value);
+						if (recognition && !isListening && !pendingStart) {
+							recognition.lang = mapLanguage(langSelect.value || 'en');
+						}
+					});
+					voiceSelect.addEventListener('change', () => localStorage.setItem('as_voice', voiceSelect.value));
+
+
+					// ==================== CHAT ROOM FUNCTIONALITY ====================
+					
+					const chatModal = document.getElementById('chatModal');
+					const closeChatModal = document.getElementById('closeChatModal');
+					const roomSelectionPanel = document.getElementById('roomSelectionPanel');
+					const createRoomForm = document.getElementById('createRoomForm');
+					const joinRoomForm = document.getElementById('joinRoomForm');
+					const activeChatPanel = document.getElementById('activeChatPanel');
+					const participantsSidebar = document.getElementById('participantsSidebar');
+					const createRoomCard = document.getElementById('createRoomCard');
+					const joinRoomCard = document.getElementById('joinRoomCard');
+					const backFromCreate = document.getElementById('backFromCreate');
+					const backFromJoin = document.getElementById('backFromJoin');
+					const createRoomSubmit = document.getElementById('createRoomSubmit');
+					const joinRoomSubmit = document.getElementById('joinRoomSubmit');
+					const leaveChatRoom = document.getElementById('leaveChatRoom');
+					const chatMessages = document.getElementById('chatMessages');
+					const chatMessageInput = document.getElementById('chatMessageInput');
+					const sendMessageBtn = document.getElementById('sendMessageBtn');
+					const voiceInputBtn = document.getElementById('voiceInputBtn');
+					const typingIndicator = document.getElementById('typingIndicator');
+					const typingUser = document.getElementById('typingUser');
+					const chatRoomTitle = document.getElementById('chatRoomTitle');
+					const chatRoomCode = document.getElementById('chatRoomCode');
+					const chatParticipantCount = document.getElementById('chatParticipantCount');
+					const participantsList = document.getElementById('participantsList');
+					const recentRoomsList = document.getElementById('recentRoomsList');
+					const chatLanguageIndicator = document.getElementById('chatLanguageIndicator');
+					
+					let chatSocket = null;
+					let currentRoom = null;
+					let chatTypingTimeout = null;
+					let isVoiceInputActive = false;
+					let chatRecognition = null;
+
+					// Language flag mapping
+					const langFlags = { 'en': '🇺🇸', 'hi': '🇮🇳', 'ml': '🇮🇳', 'es': '🇪🇸' };
+					const langNames = { 'en': 'English', 'hi': 'हिन्दी', 'ml': 'മലയാളം', 'es': 'Español' };
+
+					// Show different panels
+					function showPanel(panel) {
+						[roomSelectionPanel, createRoomForm, joinRoomForm, activeChatPanel].forEach(p => p.classList.add('hidden'));
+						participantsSidebar.classList.add('hidden');
+						leaveChatRoom.classList.add('hidden');
+						
+						if (panel === 'selection') {
+							roomSelectionPanel.classList.remove('hidden');
+							chatRoomTitle.textContent = 'Chat Room';
+							chatRoomCode.textContent = '------';
+							chatParticipantCount.textContent = '0 online';
+						} else if (panel === 'create') {
+							createRoomForm.classList.remove('hidden');
+						} else if (panel === 'join') {
+							joinRoomForm.classList.remove('hidden');
+						} else if (panel === 'chat') {
+							activeChatPanel.classList.remove('hidden');
+							participantsSidebar.classList.remove('hidden');
+							leaveChatRoom.classList.remove('hidden');
+						}
+					}
+
+					// Load user's recent rooms
+					async function loadRecentRooms() {
+						try {
+							const response = await fetch('/api/chat/rooms/');
+							const data = await response.json();
+							
+							if (data.success && data.rooms.length > 0) {
+								recentRoomsList.innerHTML = data.rooms.map(room => `
+									<div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 hover:bg-slate-700/30 cursor-pointer transition-colors recent-room-item" data-code="${room.room_code}">
+										<div>
+											<div class="font-medium text-white text-sm">${escapeHtml(room.name)}</div>
+											<div class="text-xs text-slate-400">
+												<span class="font-mono">${room.room_code}</span> · ${langFlags[room.language] || '🌐'} · ${room.participant_count} online
+											</div>
+										</div>
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-500"><path d="M9 18l6-6-6-6"></path></svg>
+									</div>
+								`).join('');
+								
+								// Add click handlers
+								document.querySelectorAll('.recent-room-item').forEach(item => {
+									item.addEventListener('click', () => {
+										const code = item.dataset.code;
+										joinRoom(code);
+									});
+								});
+							} else {
+								recentRoomsList.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No recent rooms</div>';
+							}
+						} catch (error) {
+							console.error('Error loading recent rooms:', error);
+						}
+					}
+
+					// Create a new room
+					async function createRoom() {
+						const name = document.getElementById('newRoomName').value.trim();
+						const language = document.getElementById('newRoomLanguage').value;
+						
+						if (!name) {
+							alert('Please enter a room name');
+							return;
+						}
+						
+						try {
+							const response = await fetch('/api/chat/create/', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+									'X-CSRFToken': getCsrfToken()
+								},
+								body: JSON.stringify({ name, language })
+							});
+							
+							const data = await response.json();
+							
+							if (data.success) {
+								connectToRoom(data.room);
+							} else {
+								alert('Error creating room: ' + data.error);
+							}
+						} catch (error) {
+							console.error('Error creating room:', error);
+							alert('Failed to create room');
+						}
+					}
+
+					// Join an existing room
+					async function joinRoom(roomCode) {
+						const code = roomCode || document.getElementById('joinRoomCode').value.trim().toUpperCase();
+						
+						if (!code) {
+							alert('Please enter a room code');
+							return;
+						}
+						
+						try {
+							const response = await fetch('/api/chat/join/', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+									'X-CSRFToken': getCsrfToken()
+								},
+								body: JSON.stringify({ room_code: code })
+							});
+							
+							const data = await response.json();
+							
+							if (data.success) {
+								connectToRoom(data.room);
+							} else {
+								alert('Error joining room: ' + data.error);
+							}
+						} catch (error) {
+							console.error('Error joining room:', error);
+							alert('Failed to join room');
+						}
+					}
+
+					// Connect to WebSocket
+					function connectToRoom(room) {
+						currentRoom = room;
+						
+						// Update UI
+						chatRoomTitle.textContent = room.name;
+						chatRoomCode.textContent = room.room_code;
+						chatLanguageIndicator.textContent = `${langFlags[room.language] || '🌐'} ${langNames[room.language] || room.language}`;
+						
+						// Clear previous messages
+						chatMessages.innerHTML = '';
+						
+						// Connect WebSocket
+						const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+						const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${room.room_code}/`;
+						
+						chatSocket = new WebSocket(wsUrl);
+						
+						chatSocket.onopen = () => {
+							console.log('WebSocket connected to room:', room.room_code);
+							showPanel('chat');
+						};
+						
+						chatSocket.onmessage = (event) => {
+							const data = JSON.parse(event.data);
+							handleChatMessage(data);
+						};
+						
+						chatSocket.onclose = (event) => {
+							console.log('WebSocket closed:', event.code, event.reason);
+							if (currentRoom) {
+								// Try to reconnect after a delay
+								setTimeout(() => {
+									if (currentRoom && currentRoom.room_code === room.room_code) {
+										console.log('Attempting to reconnect...');
+										connectToRoom(room);
+									}
+								}, 3000);
+							}
+						};
+						
+						chatSocket.onerror = (error) => {
+							console.error('WebSocket error:', error);
+						};
+					}
+
+					// Handle incoming WebSocket messages
+					function handleChatMessage(data) {
+						switch (data.type) {
+							case 'room_info':
+								updateRoomInfo(data.room);
+								break;
+							case 'message_history':
+								data.messages.forEach(msg => addMessageToChat(msg, false));
+								scrollToBottom();
+								break;
+							case 'chat_message':
+								addMessageToChat(data, true);
+								scrollToBottom();
+								break;
+							case 'user_join':
+								addSystemMessage(`${data.username} joined the room`);
+								updateParticipantCount();
+								break;
+							case 'user_leave':
+								addSystemMessage(`${data.username} left the room`);
+								updateParticipantCount();
+								break;
+							case 'typing':
+								showTypingIndicator(data.username, data.is_typing);
+								break;
+							case 'error':
+								console.error('Chat error:', data.message);
+								break;
+						}
+					}
+
+					// Update room info
+					function updateRoomInfo(room) {
+						if (room) {
+							chatParticipantCount.textContent = `${room.participant_count} online`;
+							updateParticipantsList(room.participants);
+						}
+					}
+
+					// Update participants list
+					function updateParticipantsList(participants) {
+						if (participants && participantsList) {
+							participantsList.innerHTML = participants.map(p => `
+								<div class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/30">
+									<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+										${p.username.charAt(0).toUpperCase()}
+									</div>
+									<span class="text-sm text-white">${escapeHtml(p.username)}</span>
+								</div>
+							`).join('');
+						}
+					}
+
+					// Update participant count
+					function updateParticipantCount() {
+						if (currentRoom) {
+							fetch(`/api/chat/room/${currentRoom.room_code}/`)
+								.then(r => r.json())
+								.then(data => {
+									if (data.success) {
+										chatParticipantCount.textContent = `${data.room.participant_count} online`;
+										updateParticipantsList(data.room.participants);
+									}
+								})
+								.catch(console.error);
+						}
+					}
+
+					// Add message to chat
+					function addMessageToChat(msg, animate = true) {
+						const isOwnMessage = msg.username === '{{ user.username }}';
+						const hasCorrections = msg.has_corrections;
+						
+						const messageHtml = `
+							<div class="flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${animate ? 'animate-slideIn' : ''}">
+								<div class="max-w-[75%] ${isOwnMessage ? 'bg-gradient-to-br from-blue-500/30 to-purple-600/30 border-blue-500/30' : 'bg-slate-800/50 border-slate-700/30'} border rounded-2xl ${isOwnMessage ? 'rounded-br-sm' : 'rounded-bl-sm'} p-3">
+									${!isOwnMessage ? `<div class="text-xs font-semibold text-purple-300 mb-1">${escapeHtml(msg.username)}</div>` : ''}
+									
+									${hasCorrections ? `
+										<div class="text-xs text-orange-400/80 line-through mb-1">${escapeHtml(msg.original_message)}</div>
+										<div class="text-white">${escapeHtml(msg.corrected_message)}</div>
+										<div class="text-xs text-green-400/70 mt-1 flex items-center gap-1">
+											<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+											${msg.disfluencies_removed} disfluencies corrected
+										</div>
+									` : `
+										<div class="text-white">${escapeHtml(msg.corrected_message || msg.original_message)}</div>
+									`}
+									
+									<div class="text-xs text-slate-500 mt-1 text-right">${formatChatTime(msg.timestamp)}</div>
+								</div>
+							</div>
+						`;
+						
+						chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+					}
+
+					// Add system message
+					function addSystemMessage(text) {
+						const html = `
+							<div class="flex justify-center my-2">
+								<div class="px-3 py-1 rounded-full bg-slate-800/50 text-xs text-slate-400">${escapeHtml(text)}</div>
+							</div>
+						`;
+						chatMessages.insertAdjacentHTML('beforeend', html);
+						scrollToBottom();
+					}
+
+					// Format chat timestamp
+					function formatChatTime(timestamp) {
+						if (!timestamp) return '';
+						const date = new Date(timestamp);
+						return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+					}
+
+					// Scroll chat to bottom
+					function scrollToBottom() {
+						chatMessages.scrollTop = chatMessages.scrollHeight;
+					}
+
+					// Show typing indicator
+					function showTypingIndicator(username, isTyping) {
+						if (isTyping) {
+							typingUser.textContent = username;
+							typingIndicator.classList.remove('hidden');
+						} else {
+							typingIndicator.classList.add('hidden');
+						}
+					}
+
+					// Send message
+					function sendMessage() {
+						const message = chatMessageInput.value.trim();
+						if (!message || !chatSocket) return;
+						
+						chatSocket.send(JSON.stringify({
+							type: 'chat_message',
+							message: message,
+							language: currentRoom?.language || langSelect?.value || 'en'
+						}));
+						
+						chatMessageInput.value = '';
+					}
+
+					// Send typing indicator
+					function sendTypingIndicator(isTyping) {
+						if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+							chatSocket.send(JSON.stringify({
+								type: 'typing',
+								is_typing: isTyping
+							}));
+						}
+					}
+
+					// Leave current room
+					async function leaveRoom() {
+						if (!currentRoom) return;
+						
+						try {
+							await fetch(`/api/chat/room/${currentRoom.room_code}/leave/`, {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+									'X-CSRFToken': getCsrfToken()
+								}
+							});
+						} catch (error) {
+							console.error('Error leaving room:', error);
+						}
+						
+						if (chatSocket) {
+							chatSocket.close();
+							chatSocket = null;
+						}
+						
+						currentRoom = null;
+						showPanel('selection');
+						loadRecentRooms();
+					}
+
+					// Get CSRF token
+					function getCsrfToken() {
+						const name = 'csrftoken';
+						let cookieValue = null;
+						if (document.cookie && document.cookie !== '') {
+							const cookies = document.cookie.split(';');
+							for (let i = 0; i < cookies.length; i++) {
+								const cookie = cookies[i].trim();
+								if (cookie.substring(0, name.length + 1) === (name + '=')) {
+									cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+									break;
+								}
+							}
+						}
+						return cookieValue;
+					}
+
+					// Voice input for chat
+					function setupChatVoiceInput() {
+						if (!SpeechRecognition) return;
+						
+						chatRecognition = new SpeechRecognition();
+						chatRecognition.continuous = false;
+						chatRecognition.interimResults = true;
+						chatRecognition.lang = mapLanguage(currentRoom?.language || langSelect?.value || 'en');
+						
+						chatRecognition.onresult = (event) => {
+							let transcript = '';
+							for (let i = 0; i < event.results.length; i++) {
+								transcript += event.results[i][0].transcript;
+							}
+							chatMessageInput.value = transcript;
+						};
+						
+						chatRecognition.onend = () => {
+							isVoiceInputActive = false;
+							voiceInputBtn.classList.remove('text-red-400', 'animate-pulse');
+							voiceInputBtn.classList.add('text-slate-400');
+						};
+						
+						chatRecognition.onerror = (event) => {
+							console.error('Voice input error:', event.error);
+							isVoiceInputActive = false;
+							voiceInputBtn.classList.remove('text-red-400', 'animate-pulse');
+						};
+					}
+
+					
+
+					closeChatModal.addEventListener('click', () => {
+						chatModal.classList.add('hidden');
+					});
+
+					createRoomCard.addEventListener('click', () => showPanel('create'));
+					joinRoomCard.addEventListener('click', () => showPanel('join'));
+					backFromCreate.addEventListener('click', () => showPanel('selection'));
+					backFromJoin.addEventListener('click', () => showPanel('selection'));
+					createRoomSubmit.addEventListener('click', createRoom);
+					joinRoomSubmit.addEventListener('click', () => joinRoom());
+					leaveChatRoom.addEventListener('click', leaveRoom);
+
+					sendMessageBtn.addEventListener('click', sendMessage);
+					chatMessageInput.addEventListener('keypress', (e) => {
+						if (e.key === 'Enter' && !e.shiftKey) {
+							e.preventDefault();
+							sendMessage();
+						}
+					});
+
+					// Typing indicator
+					chatMessageInput.addEventListener('input', () => {
+						sendTypingIndicator(true);
+						clearTimeout(chatTypingTimeout);
+						chatTypingTimeout = setTimeout(() => sendTypingIndicator(false), 2000);
+					});
+
+					// Voice input button
+					voiceInputBtn.addEventListener('click', () => {
+						if (!SpeechRecognition) {
+							alert('Speech recognition not supported in this browser');
+							return;
+						}
+						
+						if (!chatRecognition) {
+							setupChatVoiceInput();
+						}
+						
+						if (isVoiceInputActive) {
+							chatRecognition.stop();
+							isVoiceInputActive = false;
+						} else {
+							chatRecognition.lang = mapLanguage(currentRoom?.language || langSelect?.value || 'en');
+							chatRecognition.start();
+							isVoiceInputActive = true;
+							voiceInputBtn.classList.remove('text-slate-400');
+							voiceInputBtn.classList.add('text-red-400', 'animate-pulse');
+						}
+					});
+
+					// Join room code input - auto uppercase
+					document.getElementById('joinRoomCode').addEventListener('input', (e) => {
+						e.target.value = e.target.value.toUpperCase();
+					});
+
+					// Add CSS animation for messages
+					const chatStyle = document.createElement('style');
+					chatStyle.textContent = `
+						@keyframes slideIn {
+							from { opacity: 0; transform: translateY(10px); }
+							to { opacity: 1; transform: translateY(0); }
+						}
+						.animate-slideIn { animation: slideIn 0.3s ease-out; }
+					`;
+					document.head.appendChild(chatStyle);
+
+
+					// compute icon radius so icons sit on the circle perimeter
+					function updateIconRadius() {
+						if (!shell) return;
+						const rect = shell.getBoundingClientRect();
+						const radius = Math.min(rect.width, rect.height) / 2;
+						// use CSS variable --icon-offset (default 12px) to position icons on outer ring
+						const style = getComputedStyle(document.documentElement);
+						const offsetStr = style.getPropertyValue('--icon-offset') || '12px';
+						const offset = parseFloat(offsetStr);
+						const iconR = radius - offset;
+						root.style.setProperty('--icon-r', iconR + 'px');
+					}
+
+					updateIconRadius();
+					window.addEventListener('resize', updateIconRadius);
+
+					// initialize tsParticles twilight stars + shooting stars
+					if (window.tsParticles) {
+						tsParticles.load('tsparticles', {
+							fpsLimit: 60,
+							background: { color: 'transparent' },
+							particles: {
+								number: { value: 160, density: { enable: true, area: 900 } },
+								color: { value: ['#cfe8ff', '#8fd1ff', '#ffffff'] },
+								shape: { type: 'circle' },
+								opacity: { value: 0.9, random: true, anim: { enable: true, speed: 0.6, minimumValue: 0.2, sync: false } },
+								size: { value: { min: 0.35, max: 2.2 } },
+								move: { enable: false }
+							},
+							emitters: [
+								// fast diagonal shooting stars (top-right -> bottom-left)
+								{
+									position: { x: 102, y: 6 },
+									rate: { delay: 3.8, quantity: 1 },
+									particles: {
+										move: { speed: 380, straight: true, outModes: { default: 'destroy' }, angle: { offset: 200, value: 10 } },
+										size: { value: 3.6 },
+										life: { duration: { value: 1.2 }, count: 1 },
+										trail: { enable: true, length: 30, fillColor: '#000' },
+										color: { value: '#ffffff' },
+										opacity: { value: 1 }
+									}
+								},
+								// fast diagonal shooting stars (top-left -> bottom-right)
+								{
+									position: { x: -2, y: 8 },
+									rate: { delay: 4.6, quantity: 1 },
+									particles: {
+										move: { speed: 330, straight: true, outModes: { default: 'destroy' }, angle: { offset: 20, value: 10 } },
+										size: { value: 3.2 },
+										life: { duration: { value: 1.15 }, count: 1 },
+										trail: { enable: true, length: 26, fillColor: '#000' },
+										color: { value: '#fff' },
+										opacity: { value: 1 }
+									}
+								},
+								// occasional longer, slower streaks (from random top x positions)
+								{
+									position: { x: 50, y: -6 },
+									rate: { delay: 8.5, quantity: 1 },
+									particles: {
+										move: { speed: 220, straight: true, outModes: { default: 'destroy' }, angle: { offset: 210, value: 18 } },
+										size: { value: 4.2 },
+										life: { duration: { value: 1.6 }, count: 1 },
+										trail: { enable: true, length: 46, fillColor: '#000' },
+										color: { value: '#eaf6ff' },
+										opacity: { value: 0.98 }
+									}
+								},
+								// small quick pings from both sides for variety
+								{
+									position: { x: 96, y: 20 },
+									rate: { delay: 6.2, quantity: 1 },
+									particles: { move: { speed: 260, straight: true, outModes: { default: 'destroy' }, angle: { offset: 210, value: 10 } }, size: { value: 2.8 }, life: { duration: { value: 1.05 }, count: 1 }, trail: { enable: true, length: 20, fillColor: '#000' }, color: { value: '#fff' } }
+								},
+								{
+									position: { x: 4, y: 18 },
+									rate: { delay: 7.4, quantity: 1 },
+									particles: { move: { speed: 255, straight: true, outModes: { default: 'destroy' }, angle: { offset: 20, value: 10 } }, size: { value: 2.6 }, life: { duration: { value: 1.05 }, count: 1 }, trail: { enable: true, length: 20, fillColor: '#000' }, color: { value: '#fff' } }
+								}
+							]
+						});
+					}
+			});
+		</script>
+	</body>
+</html>

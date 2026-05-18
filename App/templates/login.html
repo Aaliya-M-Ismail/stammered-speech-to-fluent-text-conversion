@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign up — Emotion-Aware Assistive Speech Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
+    <style>
+      body { 
+        font-family: Inter, ui-sans-serif, system-ui; 
+        /* move closer to pure black for better contrast */
+        background: linear-gradient(135deg, #030305 0%, #050509 50%, #07070b 100%);
+        overflow-x: hidden;
+      }
+      
+      .input-ghost { 
+        background: rgba(6,10,18,0.48); 
+        color: #eaf6ff; 
+        border: 1px solid rgba(255,255,255,0.08); 
+        transition: all 0.3s ease;
+      }
+      
+      .input-ghost:focus {
+        border-color: rgba(99, 102, 241, 0.6);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        background: rgba(6,10,18,0.7);
+      }
+      
+      .cta-primary {
+        background: linear-gradient(90deg, #8b5cf6, #6366f1);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      }
+      
+      .cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+      }
+      
+      .cta-primary:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.7s ease;
+      }
+      
+      .cta-primary:hover:after {
+        left: 100%;
+      }
+      
+      .form-container {
+        backdrop-filter: blur(16px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .form-container:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.6), transparent);
+      }
+      
+      .floating-label {
+        position: relative;
+        margin-bottom: 1.5rem;
+      }
+      
+      .floating-label input {
+        z-index: 1;
+      }
+      
+      .floating-label label {
+        position: absolute;
+        top: 0.75rem;
+        left: 1rem;
+        color: rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+        pointer-events: none;
+        z-index: 0;
+      }
+      
+      .floating-label input:focus ~ label,
+      .floating-label input:not(:placeholder-shown) ~ label {
+        top: -0.5rem;
+        left: 0.75rem;
+        font-size: 0.75rem;
+        color: #8b5cf6;
+        background: #0a0a12;
+        padding: 0 0.5rem;
+        z-index: 2;
+      }
+      
+      .particles-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+      
+      .glow {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.15;
+        z-index: -1;
+      }
+      
+      .glow-1 {
+        background: #6366f1;
+        top: 10%;
+        left: 10%;
+        animation: float 15s infinite ease-in-out;
+      }
+      
+      .glow-2 {
+        background: #8b5cf6;
+        bottom: 10%;
+        right: 10%;
+        animation: float 18s infinite ease-in-out reverse;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25% { transform: translate(20px, 30px) scale(1.1); }
+        50% { transform: translate(-10px, 20px) scale(0.9); }
+        75% { transform: translate(15px, -15px) scale(1.05); }
+      }
+      
+      .logo {
+        font-weight: 900;
+        background: linear-gradient(90deg, #8b5cf6, #6366f1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      .header-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        margin: 1.5rem 0;
+      }
+      
+      .error-tooltip {
+        position: absolute;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        z-index: 50;
+        margin-top: 0.5rem;
+        max-width: 200px;
+      }
+      
+      .input-error {
+        border-color: rgba(239, 68, 68, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+      }
+      
+      .security-meter {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+      }
+      
+      .security-fill {
+        height: 100%;
+        width: 0%;
+        transition: all 0.5s ease;
+        border-radius: 2px;
+      }
+      
+      .security-weak {
+        background: #ef4444;
+        width: 33%;
+      }
+      
+      .security-medium {
+        background: #f59e0b;
+        width: 66%;
+      }
+      
+      .security-strong {
+        background: #10b981;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-white relative overflow-x-hidden">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    
+    <div id="tsparticles" class="particles-container"></div>
+
+    <main class="min-h-screen flex items-center justify-center px-6 py-12">
+      <div class="w-full max-w-md">
+        <div class="form-container rounded-2xl p-8 relative">
+          <!-- Header section integrated into the form -->
+          <div class="text-center mb-8">
+            <div class="logo text-2xl">Speech Assist AI</div>
+            <h1 class="text-3xl font-extrabold mt-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Welcome Back</h1>
+            <p class="text-white/70 mt-2">Log in to continue</p>
+          </div>
+          
+          <div class="header-divider"></div>
+          
+          <form id="loginForm" method="post" class="space-y-5">
+            {% csrf_token %}
+            {% if errors.general %}
+              <div class="p-4 rounded-xl bg-rose-900/30 border border-rose-700 text-rose-300 font-medium">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {{ errors.general }}
+              </div>
+            {% endif %}
+
+            <div class="floating-label">
+              <input name="username" type="text" value="{{ form.username|default:'' }}" placeholder=" " class="w-full px-4 py-3 rounded-xl input-ghost" required />
+              <label>Username</label>
+              {% if errors.username %}<div class="text-rose-300 text-sm mt-1 flex items-center"><i class="fas fa-exclamation-circle mr-1"></i> {{ errors.username }}</div>{% endif %}
+            </div>
+
+            <div class="floating-label">
+              <input name="password" type="password" placeholder=" " class="w-full px-4 py-3 rounded-xl input-ghost" required />
+              <label>Password</label>
+              {% if errors.password %}<div class="text-rose-300 text-sm mt-1 flex items-center"><i class="fas fa-exclamation-circle mr-1"></i> {{ errors.password }}</div>{% endif %}
+            </div>
+
+            <div class="flex justify-between items-center text-sm">
+              <label class="flex items-center text-white/60 cursor-pointer">
+                <input type="checkbox" class="mr-2 rounded" name="remember">
+                Remember me
+              </label>
+              <a href="#" class="text-purple-400 hover:underline">Forgot password?</a>
+            </div>
+
+            <div class="mt-8">
+              <button type="submit" class="w-full px-6 py-3 rounded-full cta-primary font-semibold flex items-center justify-center">
+                <span>Log in</span>
+                <i class="fas fa-arrow-right ml-2"></i>
+              </button>
+              
+              <div class="text-center mt-4 text-sm text-white/60">
+                Don't have an account? <a href="/signup/" class="text-purple-400 font-medium hover:underline">Sign up</a>
+              </div>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Professional footer -->
+        <div class="mt-8 text-center text-white/40 text-sm">
+          <p>© 2026 Speech Assist AI. All rights reserved.</p>
+          <p class="mt-1">By signing up, you agree to our <a href="#" class="text-purple-400 hover:underline">Terms of Service</a> and <a href="#" class="text-purple-400 hover:underline">Privacy Policy</a>.</p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // Enhanced particles configuration
+      if (window.tsParticles) {
+        const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        tsParticles.load('tsparticles', {
+          fpsLimit: 60,
+          background: { color: 'transparent' },
+          particles: {
+            // increase number for denser but subtle field
+            number: { value: prefersReduced ? 40 : 180, density: { enable: true, area: 900 } },
+            color: { value: ['#8b5cf6', '#6366f1', '#a78bfa', '#c4b5fd'] },
+            shape: { 
+              type: ['circle'], 
+            },
+            // lower opacity to make particles more faded against near-black background
+            opacity: { 
+              value: { min: 0.04, max: 0.25 }, 
+              random: true, 
+              anim: { enable: true, speed: 0.8, minimumValue: 0.04, sync: false } 
+            },
+            size: { value: { min: 0.45, max: 1.8 } },
+            move: { 
+              enable: !prefersReduced, 
+              speed: 0.45, 
+              direction: 'none', 
+              random: true, 
+              straight: false, 
+              outModes: { default: 'bounce' } 
+            },
+            links: { 
+              enable: true, 
+              distance: 110, 
+              color: '#8b5cf6', 
+              opacity: 0.08, 
+              width: 0.9 
+            }
+          },
+          interactivity: {
+            detectsOn: 'window',
+            events: { 
+              onHover: { enable: true, mode: 'grab' }, 
+              onClick: { enable: true, mode: 'push' }, 
+              resize: true 
+            },
+            modes: { 
+              grab: { distance: 140, links: { opacity: 0.3 } }, 
+              push: { quantity: 4 } 
+            }
+          }
+        });
+      }
+
+      // Client-side validation for login
+      (function() {
+        const form = document.getElementById('loginForm');
+        const inputs = form?.querySelectorAll('input');
+        
+        // Add focus/blur effects
+        inputs?.forEach(input => {
+          input.addEventListener('focus', function() {
+            this.parentElement.classList.add('input-focused');
+          });
+          
+          input.addEventListener('blur', function() {
+            if (this.value === '') {
+              this.parentElement.classList.remove('input-focused');
+            }
+          });
+        });
+        
+        form?.addEventListener('submit', (ev) => {
+          const username = form.querySelector('[name=username]')?.value.trim() || '';
+          const password = form.querySelector('[name=password]')?.value || '';
+          
+          if (!username || !password) {
+            ev.preventDefault();
+            alert('Please fill in all fields');
+            return;
+          }
+          
+          // Add loading animation to button
+          const button = form.querySelector('button[type="submit"]');
+          button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
+          button.disabled = true;
+        });
+      })();
+    </script>
+  </body>
+</html>

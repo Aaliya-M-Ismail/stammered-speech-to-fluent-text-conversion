@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EmoAssist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'dashboard-dark': '#0a0a0a',
+                        'card-dark': '#111111',
+                        'card-dark-hover': '#1a1a1a',
+                        'accent-orange': '#FF6B42',
+                        'accent-red': '#FF4365',
+                        'accent-blue': '#3E91FF',
+                        'accent-green': '#4CD964',
+                        'accent-purple': '#9747FF',
+                        'accent-teal': '#00CCCC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 10px rgba(255, 107, 66, 0.15)',
+                        'card': '0 2px 10px rgba(0, 0, 0, 0.15)',
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at bottom, #0d1423 0%, #090909 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Particle background */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Add twinkling effect to complement particles */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 4s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.2; }
+        }
+        
+        /* Content wrapper to ensure content appears above particles */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #333;
+        }
+        
+        /* Card hover effect */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-3px);
+        }
+        
+        /* Glassmorphism */
+        .glassmorphism {
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(50, 50, 50, 0.15);
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            background: linear-gradient(-45deg, #FF6B42, #FF4365, #3E91FF, #9747FF);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        /* Card border glow */
+        .border-glow {
+            position: relative;
+        }
+        
+        .border-glow::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: inherit;
+            background: linear-gradient(45deg, #FF6B42, #FF4365, #3E91FF, transparent, transparent);
+            z-index: -1;
+            opacity: 0.25; /* Reduced opacity */
+        }
+        
+        /* Number balls shake animation */
+        .number-ball {
+            transition: all 0.2s ease;
+        }
+        
+        .number-ball:hover {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+            20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+        
+        /* Enhanced Stats Cards */
+        .stats-card {
+            background: linear-gradient(165deg, rgba(25, 25, 30, 0.9) 0%, rgba(15, 15, 20, 0.95) 100%);
+            border: 1px solid rgba(80, 80, 100, 0.15);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 0.15); /* Reduced shadow */
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 5px 15px -8px rgba(0, 0, 0, 0.2); /* Reduced hover shadow */
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.5s ease;
+            background: radial-gradient(circle at top right, 
+                rgba(var(--accent-color-rgb), 0.12), 
+                transparent 60%);
+        }
+        
+        .stats-card:hover::before {
+            opacity: 1;
+        }
+        
+        /* Progress Bar for Stats */
+        .stats-progress {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .stats-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                rgba(var(--accent-color-rgb), 0.7), 
+                rgba(var(--accent-color-rgb), 1));
+            border-radius: 2px;
+            transition: width 1.5s ease-out;
+            position: relative;
+        }
+
+        .stats-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0) 100%);
+            animation: stats-shine 2s infinite;
+        }
+
+        @keyframes stats-shine {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        /* Enhanced Stats Icon */
+        .stats-icon {
+            background: linear-gradient(135deg, rgba(var(--accent-color-rgb), 0.8), rgba(var(--accent-color-rgb), 0.5));
+            border-radius: 1rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px -4px rgba(var(--accent-color-rgb), 0.5);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-icon::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, 
+                rgba(var(--accent-color-rgb), 0.5), 
+                rgba(var(--accent-color-rgb), 0.2));
+            border-radius: inherit;
+            z-index: -1;
+            filter: blur(4px);
+        }
+
+        .stats-value {
+            background: linear-gradient(90deg, #fff, rgba(255,255,255,0.8));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Buy button style */
+        .buy-button {
+            background: linear-gradient(to right, #ff6b42, #ff4365);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(255, 107, 66, 0.2);
+        }
+        
+        .buy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 107, 66, 0.3);
+        }
+        
+        .buy-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(255, 107, 66, 0.2);
+        }
+
+        /* Purchase modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-container {
+            background: linear-gradient(165deg, rgba(25, 25, 30, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%);
+            border: 1px solid rgba(80, 80, 100, 0.15);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            max-height: 80vh; /* Set maximum height */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-overlay.active .modal-container {
+            transform: translateY(0);
+        }
+
+        /* Circular progress for stats */
+        .circular-progress {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+        }
+
+        .circular-progress svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .circular-progress circle {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .circular-progress .bg {
+            stroke: rgba(var(--accent-color-rgb), 0.1);
+        }
+
+        .circular-progress .progress {
+            stroke: rgba(var(--accent-color-rgb), 1);
+            stroke-dasharray: 0, 100;
+            transition: stroke-dasharray 1s ease;
+        }
+
+        .circular-progress-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(var(--accent-color-rgb), 1);
+        }
+
+        /* Add orders list scroll styles */
+        .orders-list-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-right: -0.5rem; /* Offset for padding */
+            padding-right: 0.5rem; /* Add padding for scrollbar */
+        }
+
+        /* Style scrollbar for orders list */
+        .orders-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .orders-list-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .orders-list-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 107, 66, 0.3);
+            border-radius: 3px;
+        }
+
+        .orders-list-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 107, 66, 0.5);
+        }
+
+        /* Enhanced Lottery Card Styles */
+        .lottery-card {
+            background: linear-gradient(165deg, rgba(25, 25, 30, 0.9) 0%, rgba(15, 15, 20, 0.95) 100%);
+            border: 1px solid rgba(80, 80, 100, 0.15);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 3px 15px -5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            transform: translateY(0);
+        }
+
+        .lottery-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.3);
+        }
+
+        .lottery-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom right, rgba(255, 107, 66, 0.05), transparent 40%, transparent 80%, rgba(151, 71, 255, 0.05));
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Card Header */
+        .lottery-header {
+            padding: 1.5rem 1.5rem 1rem;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Prize Box */
+        .prize-box {
+            margin: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .prize-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .prize-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .prize-amount {
+            font-weight: 600;
+            font-size: 1.05rem;
+            background: linear-gradient(90deg, #fff, rgba(255,255,255,0.8));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Seller Badge */
+        .seller-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: linear-gradient(to right, rgba(62, 145, 255, 0.08), rgba(62, 145, 255, 0.03));
+            border: 1px solid rgba(62, 145, 255, 0.15);
+            border-radius: 2rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #3E91FF;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            backdrop-filter: blur(2px);
+            z-index: 10;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Card Icon */
+        .lottery-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lottery-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(var(--icon-color-rgb), 0.2), rgba(var(--icon-color-rgb), 0.1));
+            z-index: 1;
+        }
+
+        .lottery-icon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(255, 255, 255, 0.3), transparent 30%);
+            animation: rotate 4s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Card Footer */
+        .lottery-meta {
+            padding: 1.25rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .meta-item i {
+            width: 20px;
+            margin-right: 0.5rem;
+        }
+
+        /* Card Action Buttons */
+        .action-buttons {
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .details-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .details-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Status Tag */
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .status-active {
+            background: rgba(76, 217, 100, 0.1);
+            color: #4CD964;
+            border: 1px solid rgba(76, 217, 100, 0.2);
+        }
+
+        .status-sold {
+            background: rgba(255, 67, 101, 0.1);
+            color: #FF4365;
+            border: 1px solid rgba(255, 67, 101, 0.2);
+        }        .status-location {
+            background: rgba(255, 107, 66, 0.1);
+            color: #FF6B42;
+            border: 1px solid rgba(255, 107, 66, 0.2);
+        }
+
+        /* Chat Styles */
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF6B42, #FF4365);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 107, 66, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-chat-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(255, 107, 66, 0.6);
+        }
+
+        .chat-notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #FF4365;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid #0a0a0a;
+        }        .chat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container, .chat-modal-content {
+            width: 95%;
+            height: 85%;
+            max-width: 1400px;
+            max-height: 800px;
+            background: rgba(17, 17, 17, 0.95);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-sidebar {
+            width: 35%;
+            min-width: 320px;
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 80px;
+        }
+
+        .chat-close-btn {
+            background: rgba(255, 67, 101, 0.2);
+            border: 1px solid rgba(255, 67, 101, 0.3);
+            color: #FF4365;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        .chat-close-btn:hover {
+            background: rgba(255, 67, 101, 0.3);
+            transform: scale(1.1);
+        }
+
+        .chat-contacts-list, .chat-contacts {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .chat-contact {
+            padding: 18px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .chat-contact:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 107, 66, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .chat-contact.active {
+            background: rgba(255, 107, 66, 0.2);
+            border-color: rgba(255, 107, 66, 0.5);
+        }        .chat-contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B42, #FF4365);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .chat-contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-contact-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .chat-contact-last-message {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .chat-contact-badge {
+            background: #FF4365;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }        .chat-messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
+        }
+
+        .chat-message {
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .chat-message.sent {
+            background: linear-gradient(135deg, #FF6B42, #FF4365);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 8px;
+            margin-left: auto;
+        }
+
+        .chat-message.received {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 6px;
+        }        .chat-input-container {
+            padding: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 16px 24px;
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            border-color: rgba(255, 107, 66, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }        .chat-send-btn {
+            background: linear-gradient(135deg, #FF6B42, #FF4365);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(255, 107, 66, 0.3);
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .no-chat-selected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;        }
+
+        .no-chat-selected, .chat-no-contact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .no-chat-selected i, .chat-no-contact i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .chat-message-content {
+            margin-bottom: 8px;
+        }
+
+        .chat-message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        /* Mobile Responsiveness for Chat */
+        @media (max-width: 768px) {
+            .chat-container, .chat-modal-content {
+                width: 95%;
+                height: 95%;
+                flex-direction: column;
+            }
+
+            .chat-sidebar {
+                width: 100%;
+                height: 40%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .chat-main {
+                height: 60%;
+            }
+
+            .floating-chat-btn {
+                width: 55px;
+                height: 55px;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-100">
+    <!-- Particle Background -->
+    <div id="particles-js"></div>
+    
+    <!-- Additional Twinkling Stars -->
+    <div class="stars"></div>
+    
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Header Section -->
+        <header class="glassmorphism sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/5">
+            <div class="flex items-center">
+                <div class="animated-bg w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-wave-square text-white text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-xl">EmoAssist</span>
+                    <div class="text-xs text-gray-400">Admin Dashboard</div>
+                </div>
+            </div>
+              <div class="hidden md:flex space-x-1">
+                <button id="notificationBtn" onclick="showNotifications()" class="relative bg-card-dark hover:bg-card-dark-hover px-4 py-2 rounded-lg flex items-center transition-all duration-300 mr-2">
+                    <i class="fas fa-bell mr-2 text-accent-blue"></i>
+                    <span>Notifications</span>
+                    <div id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-accent-orange text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">0</div>
+                </button>
+                <button class="bg-card-dark hover:bg-card-dark-hover px-4 py-2 rounded-lg flex items-center transition-all duration-300">
+                    <i class="fas fa-th-large mr-2 text-accent-orange"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="text-gray-400 hover:text-white hover:bg-card-dark-hover px-4 py-2 rounded-lg transition-all duration-300">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span>Overview</span>
+                </button>
+                <!-- <button onclick="showNotifications()" class="text-gray-400 hover:text-white hover:bg-card-dark-hover px-4 py-2 rounded-lg transition-all duration-300 relative">
+                    <i class="fas fa-bell mr-2"></i>
+                    <span>Notifications</span>
+                    <span id="notification-badge" class="absolute top-0 right-0 bg-accent-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                </button>
+                <button class="text-gray-400 hover:text-white hover:bg-card-dark-hover px-4 py-2 rounded-lg transition-all duration-300">
+                    <i class="fas fa-trophy mr-2"></i>
+                    <span>Results</span>
+                </button> -->
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button class="relative text-gray-400 hover:text-white">
+                    <i class="fas fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-accent-red rounded-full flex items-center justify-center text-xs">2</span>
+                </button>
+                
+                <button id="profileBtn" onclick="showProfileModal()" class="flex items-center hover:opacity-80 transition-opacity">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-9 h-9 rounded-full border-2 border-accent-orange">
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="px-6 py-8">
+            <!-- Hero Section (from index) -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Hey Admin,</h2>
+                        <p class="text-gray-400 mt-1">Monitor users and system health quickly.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <div class="bg-card-dark rounded-xl px-5 py-3 flex items-center">
+                        <div class="w-2 h-10 bg-accent-blue rounded-full mr-3"></div>
+                        <div>
+                            <div class="text-sm text-gray-400">Current Time</div>
+                            <div class="text-xl font-semibold flex items-center">
+                                <i class="fas fa-clock text-accent-blue mr-2"></i>
+                                <span id="current-time">--:--:--</span>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-1">
+                                <span id="current-date">-- -- ----</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-card-dark rounded-xl px-5 py-3 flex items-center">
+                        <div class="w-2 h-10 bg-accent-green rounded-full mr-3"></div>
+                        <div>
+                            <div class="text-sm text-gray-400">Role</div>
+                            <div class="text-xl font-semibold flex items-center">
+                                <i class="fas fa-user-shield text-accent-green mr-2"></i>
+                                Admin
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Stats (simple replacements of prior cards) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="stats-card p-6 cursor-pointer relative" style="--accent-color-rgb: 62, 145, 255">
+                    <div class="flex items-center">
+                        <div class="stats-icon mr-4">
+                            <i class="fas fa-users text-white text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="stats-label">Active Users</div>
+                            <div class="flex items-center mt-1">
+                                <span class="stats-value">{{ stats.active_users|default:'1,234' }}</span>
+                                <span class="text-gray-400 text-sm ml-1">last 30 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-card p-6 cursor-pointer relative" style="--accent-color-rgb: 76, 217, 100">
+                    <div class="flex items-center">
+                        <div class="stats-icon mr-4">
+                            <i class="fas fa-microphone text-white text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="stats-label">Analyses Processed</div>
+                            <div class="flex items-center mt-1">
+                                <span class="stats-value">{{ stats.analyses|default:'12k' }}</span>
+                                <span class="text-gray-400 text-sm ml-1">total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-card p-6 cursor-pointer relative" style="--accent-color-rgb: 151, 71, 255">
+                    <div class="flex items-center">
+                        <div class="stats-icon mr-4">
+                            <i class="fas fa-heart text-white text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="stats-label">Satisfaction</div>
+                            <div class="flex items-center mt-1">
+                                <span class="stats-value">{{ stats.satisfaction|default:'94%' }}</span>
+                                <span class="text-gray-400 text-sm ml-1">median clarity score</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About section removed as requested -->
+
+            <!-- Users Table (header enhanced) -->
+            <div class="glassmorphism rounded-2xl shadow-card mb-8 p-6">
+                <div class="bg-gradient-to-r from-transparent via-black/10 to-transparent rounded-xl p-4 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 class="font-extrabold text-2xl md:text-3xl leading-tight">Registered Users</h3>
+                        <p class="text-sm text-gray-400 mt-1">Manage accounts, roles, and inspect recent signups.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="relative w-72">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input id="userSearch" oninput="filterUsers()" placeholder="Search users by name" class="pl-10 pr-4 py-2 bg-[#0b0b0b] rounded-full text-sm text-gray-300 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-accent-blue/30 focus:outline-none transition" />
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-400">Total</span>
+                            <span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-black/30 text-sm font-semibold text-gray-100">{{ users|length }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-gray-400 border-b border-gray-800">
+                                <th class="px-4 py-3">User</th>
+                                <th class="px-4 py-3">Email</th>
+                                <th class="px-4 py-3">Joined</th>
+                                <th class="px-4 py-3">Role</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-gray-800">
+                            {% for u in users %}
+                            <tr class="hover:bg-card-dark-hover transition-colors">
+                                <td class="px-4 py-4 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple text-white flex items-center justify-center font-semibold">
+                                        {{ u.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">{{ u.username }}</div>
+                                        <div class="text-xs text-gray-400">{{ u.get_full_name|default:"-" }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 text-gray-300">{{ u.email|default:'-' }}</td>
+                                <td class="px-4 py-4 text-gray-400">{{ u.date_joined|date:"M d, Y" }}</td>
+                                <td class="px-4 py-4">
+                                    {% if u.is_superuser %}
+                                        <span class="text-yellow-300 font-semibold">Superuser</span>
+                                    {% elif u.is_staff %}
+                                        <span class="text-green-400 font-semibold">Staff</span>
+                                    {% else %}
+                                        <span class="text-gray-400">User</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 text-right">
+                                    <div class="inline-flex items-center gap-2">
+                                        <a href="javascript:void(0)" data-user-id="{{ u.id }}" class="open-user-view inline-flex items-center gap-2 px-3 py-1 rounded-full bg-transparent border border-gray-700 text-gray-300 text-xs hover:bg-card-dark-hover transition">
+                                            <i class="fas fa-eye text-xs"></i>
+                                            <span>View</span>
+                                        </a>
+                                        <a href="javascript:void(0)" data-user-id="{{ u.id }}" class="open-user-modal inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs text-accent-blue border border-accent-blue bg-transparent hover:bg-accent-blue/5 transition">
+                                            <i class="fas fa-edit text-xs"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <form method="post" action="{% url 'admin_user_delete' u.id %}" onsubmit="return confirm('Delete user {{ u.username }}?');" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs text-white bg-gradient-to-r from-accent-red to-accent-orange shadow-sm hover:opacity-95 transition">
+                                                <i class="fas fa-trash-alt text-xs"></i>
+                                                <span>Delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-4 py-6 text-center text-gray-400">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <script>
+                function filterUsers() {
+                    const q = document.getElementById('userSearch').value.toLowerCase().trim();
+                    const rows = Array.from(document.querySelectorAll('#usersTableBody tr'));
+                    rows.forEach(row => {
+                        // skip empty placeholder row
+                        if (row.querySelectorAll('td').length === 0) return;
+                        const username = (row.querySelector('td:nth-child(1) .font-medium') || { textContent: '' }).textContent.toLowerCase();
+                        const email = (row.querySelector('td:nth-child(2)') || { textContent: '' }).textContent.toLowerCase();
+                        if (username.includes(q) || email.includes(q) || q === '') {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                }
+            </script>
+        </main>
+
+        <!-- Footer -->
+        <footer class="px-6 py-4 border-t border-white/5 text-center text-sm text-gray-400">
+            <p>© 2023 EmoAssist. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Lottery-related modals and purchase UI removed for admin dashboard -->
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-container max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Profile Details</h3>
+                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+              <div class="space-y-6">
+                <div class="flex items-center space-x-4">
+                    {% if user_profile.profile_picture %}
+                        <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="w-16 h-16 rounded-full border-2 border-accent-orange object-cover">
+                    {% else %}
+                        <div class="w-16 h-16 rounded-full border-2 border-accent-orange bg-accent-orange/20 flex items-center justify-center">
+                            <i class="fas fa-user text-accent-orange text-xl"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h4 class="font-medium text-lg">
+                            {% if user.first_name or user.last_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </h4>
+                        <p class="text-gray-400">{{ user_profile.get_role_display }}</p>
+                    </div>
+                </div>
+                
+                <div class="bg-card-dark/50 rounded-lg p-4 space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-400">Email</p>
+                        <p class="font-medium">{{ user.email|default:"Not provided" }}</p>
+                    </div>
+                    <!-- <div>
+                        <p class="text-sm text-gray-400">Username</p>
+                        <p class="font-medium">{{ user.username }}</p>
+                    </div> -->
+                    {% if user_profile.state %}
+                    <div>
+                        <p class="text-sm text-gray-400">State</p>
+                        <p class="font-medium">{{ user_profile.state }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-sm text-gray-400">Member Since</p>
+                        <p class="font-medium">{{ user.date_joined|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+                
+                <a href="/logout/" class="w-full py-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all flex items-center justify-center">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </a>
+            </div>
+        </div>    </div>
+
+    <!-- Chat Floating Button removed per admin requirements -->
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="chat-modal">
+        <div class="chat-container">
+            <!-- Chat Sidebar -->
+            <div class="chat-sidebar">
+                <div class="chat-header">
+                    <h3 class="text-xl font-bold text-white">Messages</h3>
+                    <button onclick="closeChatModal()" class="chat-close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chat-contacts" id="chatContactsList">
+                    <!-- Chat contacts will be loaded here -->
+                    <div class="flex items-center justify-center h-full">
+                        <div class="text-center text-gray-400">
+                            <i class="fas fa-comments text-4xl mb-4 opacity-50"></i>
+                            <p>Loading sellers...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Main Area -->
+            <div class="chat-main">
+                <!-- No Chat Selected State -->
+                <div id="noChatSelected" class="chat-no-contact">
+                    <i class="fas fa-comment-dots"></i>
+                    <h4 class="text-lg font-medium mb-2">Start a Conversation</h4>
+                    <p>Select a seller from the sidebar to start chatting</p>
+                </div>
+                
+                <!-- Chat Interface -->
+                <div id="chatInterface" style="display: none;" class="flex flex-col h-full">
+                    <div class="chat-header">
+                        <div class="flex items-center gap-3">
+                            <div class="chat-contact-avatar">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div>
+                                <h4 id="chatContactName" class="font-medium text-white">Select a seller</h4>
+                                <p class="text-sm text-gray-400">Choose a seller to start chatting</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="chatMessagesContainer" class="chat-messages-container">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <form class="chat-input-form" onsubmit="event.preventDefault(); sendChatMessage();">
+                            <textarea 
+                                id="chatMessageInput" 
+                                placeholder="Type your message..." 
+                                class="chat-input"
+                                rows="1"
+                            ></textarea>
+                            <button 
+                                type="submit"
+                                id="chatSendButton"
+                                class="chat-send-btn"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Notifications</h3>
+                <button onclick="closeNotificationsModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="orders-list-container">
+                <div id="notificationsList" class="space-y-4">
+                    {% for notification in notifications %}
+                    <div class="bg-card-dark/50 p-4 rounded-lg hover:bg-card-dark-hover transition-all {% if notification.status == 'UNREAD' %}border-l-4 border-accent-blue{% endif %}">
+                        <div class="flex justify-between mb-2">
+                            <h4 class="font-medium">{{ notification.title }}</h4>
+                            <span class="text-xs text-gray-400">{{ notification.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <p class="text-sm text-gray-300">{{ notification.message }}</p>
+                        {% comment %} Prize notifications removed for admin dashboard {% endcomment %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 rounded-full bg-card-dark mx-auto flex items-center justify-center mb-4">
+                            <i class="fas fa-bell-slash text-gray-400 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-medium text-gray-300 mb-2">No Notifications</h4>
+                        <p class="text-gray-400">You don't have any notifications yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print template removed -->
+
+    <!-- Scripts -->
+    <script>
+        // Keep non-lottery JS: particles init, time display, profile modals, chat and notifications
+        function showProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        // Initialize particle.js and small UI behaviors
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate additional twinkling stars
+            const starsContainer = document.querySelector('.stars');
+            const starCount = 50;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random size between 1px and 3px
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Random position
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation delay
+                star.style.animationDelay = `${Math.random() * 4}s`;
+                
+                starsContainer.appendChild(star);
+            }
+
+            // Configure particles.js
+            if (window.particlesJS) {
+                particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 180,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": ["#ffffff", "#e0e0ff", "#d8d8ff", "#ccccff", "#f0f0ff"]
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        },
+                        "polygon": {
+                            "nb_sides": 5
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.6,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 0.5,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 2,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 1,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": false
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 0.2,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "bubble"
+                        },
+                        "onclick": {
+                            "enable": false
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "bubble": {
+                            "distance": 150,
+                            "size": 3,
+                            "duration": 2,
+                            "opacity": 0.8,
+                            "speed": 3
+                        }
+                    }
+                },
+                "retina_detect": true
+                });
+            }
+        });
+        // Initialize non-lottery behaviors on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for notifications and update badge
+            if (typeof checkForNotifications === 'function') checkForNotifications();
+        });
+        
+        // Notification functions
+        function showNotifications() {
+            document.getElementById('notificationsModal').classList.add('active');
+            
+            // Fetch latest notifications
+            fetch('/api/notifications/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateNotificationsList(data.notifications);
+                        
+                        // Mark notifications as read
+                        markNotificationsAsRead();
+                    } else {
+                        console.error('Error fetching notifications:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching notifications:', error);
+                });
+        }
+        
+        function closeNotificationsModal() {
+            document.getElementById('notificationsModal').classList.remove('active');
+        }
+        
+        function updateNotificationsList(notifications) {
+            const notificationsList = document.getElementById('notificationsList');
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 rounded-full bg-card-dark mx-auto flex items-center justify-center mb-4">
+                            <i class="fas fa-bell-slash text-gray-400 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-medium text-gray-300 mb-2">No Notifications</h4>
+                        <p class="text-gray-400">You don't have any notifications yet.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            notificationsList.innerHTML = notifications.map(notification => `
+                <div class="bg-card-dark/50 p-4 rounded-lg hover:bg-card-dark-hover transition-all ${notification.status === 'UNREAD' ? 'border-l-4 border-accent-blue' : ''}">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-medium">${notification.title}</h4>
+                        <span class="text-xs text-gray-400">${new Date(notification.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    <p class="text-sm text-gray-300">${notification.message}</p>
+                    ``
+                </div>
+            `).join('');
+        }
+        
+        function checkForNotifications() {
+            // Fetch unread notification count for the badge
+            fetch('/api/notifications/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateNotificationBadge(data.count);
+                    } else {
+                        console.error('Error fetching notification count:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching notification count:', error);
+                });
+        }
+        
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            
+            if (count > 0) {
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        
+        function markNotificationsAsRead() {
+            // Call API to mark notifications as read
+            fetch('/api/notifications/mark-read/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update badge to show 0 notifications
+                    updateNotificationBadge(0);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notifications as read:', error);
+            });
+        }
+          function claimPrize(lotteryId) {
+            // Call API to claim prize
+            fetch('/api/lottery/claim-prize/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    lottery_id: lotteryId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Congratulations! Your prize claim has been processed. The amount will be credited to your account within 24 hours.');
+                    closeNotificationsModal();
+                } else {
+                    alert('Error claiming prize: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error claiming prize:', error);
+                alert('Error claiming prize. Please try again later.');
+            });
+        }
+
+        // Chat System Functions
+        let currentChatId = null;
+        let messagePollingInterval = null;
+        let contactsPollingInterval = null;
+
+        function openChatModal() {
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'flex';
+            loadChatContacts();
+            startContactsPolling();
+        }
+
+        function closeChatModal() {
+            const chatModal = document.getElementById('chatModal');
+            chatModal.style.display = 'none';
+            stopMessagePolling();
+            stopContactsPolling();
+            currentChatId = null;
+        }
+
+        function loadChatContacts() {
+            fetch('/api/chat/contacts/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    renderChatContacts(data.contacts);
+                    updateChatNotificationBadge(data.total_unread || 0);
+                } else {
+                    console.error('Error loading chat contacts:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading chat contacts:', error);
+            });
+        }
+
+        function renderChatContacts(contacts) {
+            const contactsList = document.getElementById('chatContactsList');
+            contactsList.innerHTML = '';
+
+            if (contacts.length === 0) {
+                contactsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-comments text-3xl mb-4 opacity-30"></i>
+                        <p>No conversations yet</p>
+                        <p class="text-sm mt-2">Start chatting with sellers from your state</p>
+                    </div>
+                `;
+                return;
+            }            contacts.forEach(contact => {
+                const contactElement = document.createElement('div');
+                contactElement.className = `chat-contact ${currentChatId === contact.chat_id ? 'active' : ''}`;
+                contactElement.setAttribute('data-chat-id', contact.chat_id || '');
+                contactElement.setAttribute('data-seller-id', contact.id);
+                contactElement.onclick = () => selectChatContact(contact.chat_id, contact.other_user_name, contact.id);
+                
+                contactElement.innerHTML = `
+                    <div class="chat-contact-avatar">
+                        ${contact.other_user_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="chat-contact-info">
+                        <div class="chat-contact-name">${contact.other_user_name}</div>
+                        <div class="chat-contact-last-message">
+                            ${contact.last_message || 'No messages yet'}
+                        </div>
+                    </div>
+                    ${contact.unread_count > 0 ? `<div class="chat-contact-badge">${contact.unread_count}</div>` : ''}
+                `;
+                
+                contactsList.appendChild(contactElement);
+            });
+        }        function selectChatContact(chatId, contactName, sellerId) {
+            // If no existing chat, start a new one
+            if (!chatId) {
+                startChatWithSeller(sellerId, contactName);
+                return;
+            }
+            
+            currentChatId = chatId;
+            
+            // Update active contact
+            document.querySelectorAll('.chat-contact').forEach(contact => {
+                contact.classList.remove('active');
+            });
+            
+            // Find and mark the clicked contact as active
+            const clickedContact = Array.from(document.querySelectorAll('.chat-contact')).find(contact => {
+                const contactChatId = contact.getAttribute('data-chat-id');
+                const contactSellerId = contact.getAttribute('data-seller-id');
+                return (chatId && contactChatId == chatId) || (!chatId && contactSellerId == sellerId);
+            });
+            
+            if (clickedContact) {
+                clickedContact.classList.add('active');
+            }
+            
+            // Update chat header
+            document.getElementById('chatContactName').textContent = contactName;
+            
+            // Show chat interface and load messages
+            document.getElementById('noChatSelected').style.display = 'none';
+            document.getElementById('chatInterface').style.display = 'flex';
+            
+            loadChatMessages(chatId);
+            startMessagePolling(chatId);
+        }
+
+        function loadChatMessages(chatId) {
+            fetch(`/api/chat/${chatId}/messages/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    renderChatMessages(data.messages);
+                } else {
+                    console.error('Error loading chat messages:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading chat messages:', error);
+            });
+        }        function renderChatMessages(messages) {
+            const messagesContainer = document.getElementById('chatMessagesContainer');
+            messagesContainer.innerHTML = '';
+
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `chat-message ${message.is_own ? 'sent' : 'received'}`;
+                
+                // Format the time properly
+                let formattedTime = message.created_at;
+                try {
+                    // If created_at is already formatted as HH:MM, use it directly
+                    // Otherwise try to parse and format
+                    if (!/^\d{2}:\d{2}$/.test(message.created_at)) {
+                        const date = new Date(message.created_at);
+                        formattedTime = date.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: false 
+                        });
+                    }
+                } catch (e) {
+                    formattedTime = message.created_at; // Fallback to original
+                }
+                
+                messageElement.innerHTML = `
+                    <div class="chat-message-content">${message.content}</div>
+                    <div class="chat-message-time">${formattedTime}</div>
+                `;
+                
+                messagesContainer.appendChild(messageElement);
+            });
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }        function sendChatMessage() {
+            const messageInput = document.getElementById('chatMessageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || !currentChatId) {
+                return;
+            }
+
+            // Disable send button temporarily
+            const sendButton = document.getElementById('chatSendButton');
+            sendButton.disabled = true;
+
+            // Immediately add message to UI for better UX
+            const messagesContainer = document.getElementById('chatMessagesContainer');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message sent';
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            
+            messageElement.innerHTML = `
+                <div class="chat-message-content">${message}</div>
+                <div class="chat-message-time">${timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messageInput.value = '';
+
+            fetch('/api/chat/send/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    chat_id: currentChatId,
+                    content: message
+                })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Message already added to UI, just refresh contacts
+                    loadChatContacts(); // Refresh contacts to update last message
+                } else {
+                    console.error('Error sending message:', data.message);
+                    alert('Error sending message. Please try again.');
+                    // Remove the optimistically added message on error
+                    messageElement.remove();
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
+                // Remove the optimistically added message on error
+                messageElement.remove();
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+            });
+        }function startChatWithSeller(sellerId, sellerName) {
+            fetch('/api/chat/start/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    seller_id: sellerId
+                })
+            })
+            .then(response => response.json())            .then(data => {
+                if (data.status === 'success') {
+                    currentChatId = data.chat_id;
+                    
+                    // Update active contact
+                    document.querySelectorAll('.chat-contact').forEach(contact => {
+                        contact.classList.remove('active');
+                    });
+                    
+                    // Find and mark the corresponding seller contact as active
+                    const sellerContact = Array.from(document.querySelectorAll('.chat-contact')).find(contact => {
+                        return contact.getAttribute('data-seller-id') == sellerId;
+                    });
+                    
+                    if (sellerContact) {
+                        sellerContact.classList.add('active');
+                        sellerContact.setAttribute('data-chat-id', data.chat_id);
+                    }
+                    
+                    // Update chat header
+                    document.getElementById('chatContactName').textContent = sellerName;
+                    
+                    // Show chat interface
+                    document.getElementById('noChatSelected').style.display = 'none';
+                    document.getElementById('chatInterface').style.display = 'flex';
+                      // Clear messages and show empty state
+                    document.getElementById('chatMessagesContainer').innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fas fa-comments text-3xl mb-4 opacity-30"></i>
+                            <p>Start a conversation</p>
+                            <p class="text-sm mt-2">Send a message to ${sellerName}</p>
+                        </div>
+                    `;
+                    
+                    // Reload contacts to update the chat list
+                    loadChatContacts();
+                    
+                    startMessagePolling(data.chat_id);
+                } else {
+                    console.error('Error starting chat:', data.message);
+                    alert('Error starting chat. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error starting chat:', error);
+                alert('Error starting chat. Please try again.');
+            });
+        }
+
+        function updateChatNotificationBadge(unreadCount) {
+            const badge = document.getElementById('chatNotificationBadge');
+            if (unreadCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // User modal (event delegation binding)
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        function openUserModal(userId) {
+            // Fetch user details
+            fetch(`/admin-dashboard/api/user/${userId}/`).then(r => r.json()).then(data => {
+                if (!data.success) return alert('Failed to load user');
+                const u = data.user;
+                // Create or reuse a modal element
+                let modal = document.getElementById('userModal');
+                if (!modal) {
+                    // Build modal HTML
+                    modal = document.createElement('div');
+                    modal.id = 'userModal';
+                    modal.className = 'modal-overlay';
+                    modal.innerHTML = `
+                        <div class="modal-container max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 id="userModalTitle" class="text-xl font-bold">User Details</h3>
+                                <button id="closeUserModalBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <div id="userModalAvatar" class="w-16 h-16 rounded-full border-2 border-accent-orange bg-accent-orange/20 flex items-center justify-center text-accent-orange text-xl font-bold"></div>
+                                    <div>
+                                        <h4 id="userModalUsername" class="font-medium text-lg"></h4>
+                                        <p id="userModalRole" class="text-sm text-gray-400"></p>
+                                    </div>
+                                </div>
+                                <div class="bg-card-dark/50 rounded-lg p-4 space-y-4">
+                                    <div>
+                                        <label class="text-xs text-gray-400">First name</label>
+                                        <input id="user_first_name" class="w-full mt-1 px-3 py-2 rounded-md bg-card-dark text-white" />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">Last name</label>
+                                        <input id="user_last_name" class="w-full mt-1 px-3 py-2 rounded-md bg-card-dark text-white" />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">Email</label>
+                                        <input id="user_email" class="w-full mt-1 px-3 py-2 rounded-md bg-card-dark text-white" />
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-400">Phone</label>
+                                        <input id="user_phone" class="w-full mt-1 px-3 py-2 rounded-md bg-card-dark text-white" />
+                                    </div>
+                                    <div class="flex items-end justify-end">
+                                        <div>
+                                            <button id="userSaveBtn" class="px-4 py-2 rounded-md bg-accent-blue text-white">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    document.getElementById('closeUserModalBtn').addEventListener('click', closeUserModal);
+                    document.getElementById('userSaveBtn').addEventListener('click', saveUserChanges);
+                }
+                // populate
+                document.getElementById('userModalTitle').textContent = `User: ${u.username}`;
+                document.getElementById('userModalUsername').textContent = u.username;
+                document.getElementById('userModalRole').textContent = u.is_superuser ? 'Superuser' : (u.is_staff ? 'Staff' : 'User');
+                document.getElementById('user_first_name').value = u.first_name || '';
+                document.getElementById('user_last_name').value = u.last_name || '';
+                document.getElementById('user_email').value = u.email || '';
+                document.getElementById('user_phone').value = u.profile.phone_number || '';
+                document.getElementById('userModalAvatar').textContent = u.username ? u.username.charAt(0).toUpperCase() : '?';
+
+                modal.classList.add('active');
+                // store active id
+                modal.dataset.activeUserId = u.id;
+            }).catch(err => { console.error(err); alert('Error loading user'); });
+        }
+
+        function closeUserModal() {
+            const modal = document.getElementById('userModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function saveUserChanges() {
+            const modal = document.getElementById('userModal');
+            if (!modal) return;
+            const userId = modal.dataset.activeUserId;
+            const payload = {
+                first_name: document.getElementById('user_first_name').value.trim(),
+                last_name: document.getElementById('user_last_name').value.trim(),
+                email: document.getElementById('user_email').value.trim(),
+                phone_number: document.getElementById('user_phone').value.trim()
+            };
+            fetch(`/admin-dashboard/api/user/${userId}/update/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    // reload to reflect changes
+                    window.location.reload();
+                } else {
+                    alert('Update failed: ' + (data.error || 'unknown'));
+                }
+            }).catch(err => { console.error(err); alert('Update failed'); });
+        }
+
+        // bind click handlers for existing edit buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.open-user-modal').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    const id = this.dataset.userId;
+                    if (id) openUserModal(id);
+                });
+            });
+            document.querySelectorAll('.open-user-view').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    const id = this.dataset.userId;
+                    if (id) openUserViewModal(id);
+                });
+            });
+        });
+
+        // View-only modal
+        function openUserViewModal(userId) {
+            fetch(`/admin-dashboard/api/user/${userId}/`).then(r => r.json()).then(data => {
+                if (!data.success) return alert('Failed to load user');
+                const u = data.user;
+                let modal = document.getElementById('userViewModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'userViewModal';
+                    modal.className = 'modal-overlay';
+                    modal.innerHTML = `
+                        <div class="modal-container max-w-md">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 id="userViewTitle" class="text-xl font-bold">User</h3>
+                                <button id="closeUserViewBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <div id="userViewAvatar" class="w-16 h-16 rounded-full border-2 border-accent-orange bg-accent-orange/20 flex items-center justify-center text-accent-orange text-xl font-bold"></div>
+                                    <div>
+                                        <h4 id="userViewUsername" class="font-medium text-lg"></h4>
+                                        <p id="userViewRole" class="text-sm text-gray-400"></p>
+                                    </div>
+                                </div>
+                                <div class="bg-card-dark/50 rounded-lg p-4 space-y-3">
+                                    <div><div class="text-xs text-gray-400">Email</div><div id="userViewEmail" class="font-medium"></div></div>
+                                    <div><div class="text-xs text-gray-400">Phone</div><div id="userViewPhone" class="font-medium"></div></div>
+                                    <div><div class="text-xs text-gray-400">Joined</div><div id="userViewJoined" class="font-medium"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    document.getElementById('closeUserViewBtn').addEventListener('click', function(){ modal.classList.remove('active'); });
+                }
+                document.getElementById('userViewTitle').textContent = `User: ${u.username}`;
+                document.getElementById('userViewUsername').textContent = u.username;
+                document.getElementById('userViewRole').textContent = u.is_superuser ? 'Superuser' : (u.is_staff ? 'Staff' : 'User');
+                document.getElementById('userViewEmail').textContent = u.email || '-';
+                document.getElementById('userViewPhone').textContent = u.profile.phone_number || '-';
+                document.getElementById('userViewJoined').textContent = new Date(u.date_joined).toLocaleDateString();
+                document.getElementById('userViewAvatar').textContent = u.username ? u.username.charAt(0).toUpperCase() : '?';
+                modal.classList.add('active');
+            }).catch(err => { console.error(err); alert('Error loading user'); });
+        }
+
+        function startMessagePolling(chatId) {
+            stopMessagePolling();
+            messagePollingInterval = setInterval(() => {
+                if (currentChatId === chatId) {
+                    loadChatMessages(chatId);
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        function stopMessagePolling() {
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+            }
+        }
+
+        function startContactsPolling() {
+            stopContactsPolling();
+            contactsPollingInterval = setInterval(() => {
+                loadChatContacts();
+            }, 30000); // Poll every 30 seconds
+        }
+
+        function stopContactsPolling() {
+            if (contactsPollingInterval) {
+                clearInterval(contactsPollingInterval);
+                contactsPollingInterval = null;
+            }
+        }        // Time and Date Display Function
+        function updateDateTime() {
+            const now = new Date();
+            const timeDisplay = document.getElementById('current-time');
+            const dateDisplay = document.getElementById('current-date');
+            
+            // Only update if elements exist
+            if (timeDisplay) {
+                timeDisplay.textContent = now.toLocaleTimeString('en-US', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+
+            if (dateDisplay) {
+                // Format like: 18 Oct 2025
+                const day = now.getDate();
+                const month = now.toLocaleString('en-GB', { month: 'short' });
+                const year = now.getFullYear();
+                dateDisplay.textContent = `${day} ${month} ${year}`;
+            }
+        }
+
+        // Initialize chat notification badge on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChatContacts();
+            
+            // Add enter key support for chat input
+            const chatInput = document.getElementById('chatMessageInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendChatMessage();
+                    }
+                });
+            }
+            
+            // Initialize time display
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Speech Assist</title>
+  <meta name="description" content="Assistive AI that converts disfluent speech into smooth, natural language in real time — emotion-aware and privacy-first." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui']
+            },
+            colors: {
+              brand: '#e6d5c3'
+            }
+          }
+        }
+      }
+    </script>
+  <style>
+      /* small helpers for background grid lines */
+      .bg-hero {
+        background-color: #050609;
+        /* layered gentle gradients using Tailwind colors inspiration */
+        background-image:
+          radial-gradient(800px 400px at 10% 20%, rgba(99,102,241,0.06), transparent 30%),
+          radial-gradient(600px 340px at 90% 30%, rgba(236,72,153,0.04), transparent 30%),
+          linear-gradient(180deg, rgba(255,255,255,0.012), transparent 40%);
+        background-size: cover;
+      }
+
+      /* animated gradient blobs for depth */
+      .grad-blob {
+        position: absolute;
+        border-radius: 9999px;
+        filter: blur(60px);
+        opacity: 0.9;
+        mix-blend-mode: screen;
+        pointer-events: none;
+      }
+
+      .blob-1 { width: 520px; height: 520px; left: -6%; top: 6%; background: linear-gradient(135deg, rgba(59,130,246,0.16), rgba(99,102,241,0.08)); animation: blobMove 12s ease-in-out infinite; }
+      .blob-2 { width: 420px; height: 420px; right: -8%; top: 10%; background: linear-gradient(135deg, rgba(236,72,153,0.14), rgba(249,115,22,0.06)); animation: blobMove 10s ease-in-out infinite reverse; }
+
+      @keyframes blobMove {
+        0% { transform: translateY(0) translateX(0) scale(1); }
+        50% { transform: translateY(10px) translateX(6px) scale(1.03); }
+        100% { transform: translateY(0) translateX(0) scale(1); }
+      }
+
+      /* subtle particle field using pseudo elements on container */
+      .particle-field { position:absolute; inset:0; pointer-events:none; }
+      .particle-field:after{ content:''; position:absolute; inset:0; background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 30px 30px; opacity:0.09; mix-blend-mode: overlay; }
+
+      /* soft vignette */
+      .vignette:before{ content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 50% 30%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.7) 100%); }
+
+      /* subtle headline accent */
+      .headline-accent{background:linear-gradient(90deg,#fff 0%, #f8e6d6 40%); -webkit-background-clip:text; background-clip:text; color:transparent}
+
+      /* glass nav */
+      .nav-glass{background: rgba(255,255,255,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.04)}
+
+  /* enhanced navbar visuals */
+  .nav-inner { display:flex; align-items:center; justify-content:space-between; gap:1rem }
+  #mainNav a { position:relative; padding:6px 8px; border-radius:8px; transition: color 200ms ease; }
+  #mainNav a::after { content:''; position:absolute; left:10%; right:10%; bottom:0; height:2px; background: linear-gradient(90deg,#9fd6ff,#fff1de,#eaf8ff); transform: scaleX(0); transform-origin:left; transition: transform 360ms cubic-bezier(.2,.9,.2,1); border-radius:2px; }
+  #mainNav a:hover::after { transform: scaleX(1); }
+  #mainNav a:hover { color: #fff; }
+
+  .nav-controls { display:flex; align-items:center; gap:0.6rem }
+  .nav-btn { display:inline-flex; align-items:center; gap:0.6rem; padding:0.5rem 0.7rem; border-radius:999px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); }
+  .search-btn { width:40px; height:40px; display:grid; place-items:center }
+  .notif { position:relative; width:44px; height:44px; display:grid; place-items:center; border-radius:10px }
+  .notif .dot { position:absolute; top:8px; right:9px; width:9px; height:9px; background: #ff7a7a; border-radius:50%; box-shadow: 0 0 10px rgba(255,122,122,0.5); }
+  .avatar { width:40px; height:40px; border-radius:999px; overflow:hidden; display:inline-block; border:1px solid rgba(255,255,255,0.08); }
+  .avatar img { width:100%; height:100%; object-fit:cover; display:block }
+
+
+      /* CTA styles */
+      .cta-primary{background: linear-gradient(90deg,#fff1e6,#f7decb); color:#0b0b0b; box-shadow: 0 12px 40px rgba(250,205,160,0.12), inset 0 1px 0 rgba(255,255,255,0.6)}
+      .cta-primary:hover { transform: translateY(-4px); }
+      .cta-ghost{border:1px solid rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); background:transparent}
+
+      /* refined controls */
+      .input-ghost {
+        background: rgba(6,10,18,0.48);
+        color: #eaf6ff;
+        border: 1px solid rgba(255,255,255,0.06);
+        transition: box-shadow 200ms ease, transform 200ms ease, border-color 180ms ease;
+      }
+      .input-ghost::placeholder { color: rgba(230,240,255,0.35); }
+      .input-ghost:focus { box-shadow: 0 8px 30px rgba(40,120,255,0.08); border-color: rgba(159,208,255,0.22); transform: translateY(-1px); }
+
+      .cta-primary { transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease; }
+      .cta-primary:hover { box-shadow: 0 26px 70px rgba(120,160,255,0.12), 0 6px 20px rgba(0,0,0,0.25); transform: translateY(-6px) scale(1.01); }
+      .cta-ghost:hover { background: rgba(255,255,255,0.02); transform: translateY(-2px); }
+
+      /* hero entrance animation */
+      .hero-content { opacity: 0; transform: translateY(8px) scale(0.996); transition: opacity 640ms cubic-bezier(.2,.9,.2,1), transform 640ms cubic-bezier(.2,.9,.2,1); }
+      .hero-content.animate-in { opacity: 1; transform: translateY(0) scale(1); }
+
+      /* prefer-reduced-motion support */
+      @media (prefers-reduced-motion: reduce) {
+        .hero-content, .cta-primary, .cta-ghost, .input-ghost { transition: none !important; animation: none !important; }
+      }
+
+      /* subtle grid lines behind CTA */
+      .hero-grid{ position:relative }
+      .hero-grid:after{ content:''; position:absolute; inset:0; pointer-events:none; background-image: linear-gradient(0deg, rgba(255,255,255,0.008) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px); background-size: 48px 48px, 48px 48px; opacity:0.55 }
+
+      /* creative floating widgets around the hero */
+      .hero-embellishments { position:absolute; inset:0; pointer-events:none; z-index:1; }
+      .hero-widget {
+        position:absolute;
+        min-width: 170px;
+        max-width: 210px;
+        padding: 1rem 1.1rem;
+        border-radius: 1.3rem;
+        background: rgba(12,16,28,0.62);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 22px 60px rgba(6,10,20,0.52);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        color: rgba(255,255,255,0.88);
+        display:flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        animation: floatY 10s ease-in-out infinite;
+      }
+      .hero-widget .widget-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.48); }
+      .hero-widget .widget-value { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+      .hero-widget .widget-chip {
+        display:inline-flex;
+        align-items:center;
+        gap:0.4rem;
+        padding:0.35rem 0.65rem;
+        border-radius:999px;
+        background: rgba(122,202,255,0.14);
+        color:#d7ecff;
+        font-size:0.7rem;
+        letter-spacing:0.07em;
+      }
+      .hero-widget svg { width:16px; height:16px; opacity:0.85; }
+      .hero-widget.widget-top-left { top:-18px; left:-70px; animation-delay: -1.5s; }
+      .hero-widget.widget-top-right { top:-36px; right:-64px; animation-delay: -3.2s; }
+      .hero-widget.widget-bottom-right { bottom:-12px; right:-30px; animation-delay: -5.2s; }
+
+      /* hero ring removed per request */
+
+      @keyframes floatY {
+        0%, 100% { transform: translate3d(0,0,0); }
+        50% { transform: translate3d(0,-12px,0); }
+      }
+
+      @keyframes pulseRing {
+        0%, 100% { opacity:0.52; transform: translate(-50%, -48%) scale(0.98); }
+        50% { opacity:0.82; transform: translate(-50%, -48%) scale(1.04); }
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      /* headline letter spacing and responsive sizing */
+      .hero-title{ letter-spacing:-0.02em; position:relative; display:inline-block }
+
+      /* layered blurred shadow behind the headline for depth */
+      .hero-title .shadow {
+        position:absolute;
+        inset:0;
+        color: rgba(255,255,255,0.06);
+        transform: translate(8px,14px) scale(1.02);
+        filter: blur(8px);
+        z-index:0;
+        pointer-events:none;
+        mix-blend-mode: screen;
+      }
+
+      .hero-title .main { position:relative; z-index:2 }
+
+      /* animated gradient accent for important words */
+      .hero-title .accent {
+        display:inline-block;
+        background: linear-gradient(90deg, #ffffff 0%, #e8f6ff 30%, #ffd7a6 60%, #fff 100%);
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: gradientShift 6s linear infinite;
+        text-shadow: 0 8px 30px rgba(8,12,20,0.45);
+        transform: skewX(-2deg);
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* small animated underline under the headline */
+      .hero-underline { margin-top: 18px; display:flex; justify-content:center }
+      .hero-underline svg { width:160px; height:10px; opacity:0.9; filter: drop-shadow(0 8px 20px rgba(20,30,60,0.45)); }
+
+      /* small subtle detail under hero */
+      .trusted-chip{ background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.03) }
+
+  .glimmer { position:absolute; width:160%; height:160%; top:var(--glimmer-y, 50%); left:var(--glimmer-x, 50%); transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 65%); opacity:0; pointer-events:none; transition: opacity 0.4s ease, transform 0.25s ease; }
+  .cta-primary:hover .glimmer { opacity:0.8; }
+  /* fixed header spacing helper (will be set by JS) */
+  .has-fixed-header { transition: padding-top 160ms ease; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-hero text-white relative vignette font-sans overflow-x-hidden has-fixed-header">
+  <!-- animated gradient blobs -->
+    <div class="grad-blob blob-1" aria-hidden="true"></div>
+    <div class="grad-blob blob-2" aria-hidden="true"></div>
+    <div class="particle-field" aria-hidden="true"></div>
+  <!-- tsParticles starfield (twinkling stars + occasional shooting stars) -->
+  <div id="tsparticles" class="pointer-events-none fixed inset-0 -z-10"></div>
+    <header class="w-full z-40 fixed top-0 left-0">
+      <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between nav-glass rounded-b-3xl shadow-lg relative" role="navigation" aria-label="Main navigation">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center justify-center h-9 w-9 rounded-full bg-white/8 border border-white/10 shadow-inner">
+            <span class="text-xs font-medium tracking-[0.04em]">EA</span>
+          </div>
+          <div class="flex flex-col">
+            <div class="text-xs font-medium tracking-[0.06em] uppercase">Speech Assist</div>
+            <span class="text-[0.65rem] text-white/40 tracking-[0.12em]">Fluent Speech</span>
+          </div>
+        </div>
+
+        <nav id="mainNav" class="hidden md:flex items-center gap-8 text-sm text-white/70">
+          <a href="#" class="hover:text-white transition flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Research</a>
+          <!-- <a href="#" class="hover:text-white transition flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Demo</a> -->
+          <a href="#" class="hover:text-white transition flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5c3.866 0 7 1.79 7 4v6H5V9c0-2.21 3.134-4 7-4z" stroke="currentColor" stroke-width="1.3"/><path d="M9 18a3 3 0 006 0" stroke="currentColor" stroke-width="1.3"/></svg>Resources</a>
+          <a href="#" class="hover:text-white transition flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 4h12l2 4H4l2-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7 12h10l1 8H6l1-8z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Docs</a>
+        </nav>
+
+        <div class="hidden md:flex items-center gap-3 nav-controls">
+          <button class="nav-btn search-btn" aria-label="Search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.4"/></svg>
+          </button>
+
+          <!-- <button id="bookBtn" class="px-4 py-2 rounded-full text-sm cta-ghost flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 5h16" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 15h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Request demo
+          </button> -->
+          {% if user.is_authenticated %}
+            <a id="speechBtn" href="/speech/" class="px-5 py-2.5 rounded-full text-sm cta-primary font-semibold flex items-center gap-2 relative overflow-hidden inline-flex items-center">
+              <span class="glimmer"></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l4 7h-8l4-7z" stroke="#0b0b0b" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 11v10" stroke="#0b0b0b" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Speech analysis
+            </a>
+            <a id="logoutBtn" href="/logout/" class="nav-btn" aria-label="Log out">Log out</a>
+          {% else %}
+          <a id="loginBtn" href="/login/" class="nav-btn" aria-label="Log in">Log in</a>
+            <a id="signupBtn" href="/signup/" class="px-5 py-2.5 rounded-full text-sm cta-primary font-semibold flex items-center gap-2 relative overflow-hidden inline-flex items-center">
+              <span class="glimmer"></span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l4 7h-8l4-7z" stroke="#0b0b0b" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 11v10" stroke="#0b0b0b" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Sign up
+            </a>
+          {% endif %}
+          <!-- <div class="notif" title="Notifications" role="button" tabindex="0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="dot" aria-hidden="true"></span>
+          </div> -->
+        </div>
+
+        <button id="mobileToggle" class="md:hidden p-2.5 rounded-xl bg-white/6 border border-white/10">
+          <svg id="mobileIcon" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-24 flex flex-col items-center text-center hero-grid relative">
+      <div class="hero-embellishments" aria-hidden="true"></div>
+
+  <div id="heroContent" class="w-full max-w-3xl relative z-10 hero-content">
+        <div class="mb-6 flex justify-center">
+            <div class="trusted-chip px-4 py-2 rounded-full text-xs text-white/70 inline-flex items-center gap-3">
+            <span class="h-6 w-6 rounded-full bg-white/6 grid place-items-center text-[0.65rem]">✓</span>
+            Trusted by speech therapists & clinics
+          </div>
+        </div>
+
+        <h1 class="hero-title text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
+          <span class="shadow" aria-hidden="true">Smooth speech,<br>confident conversations</span>
+          <span class="main">
+            Smooth speech,
+            <span class="block accent">for people with disfluent speech</span>
+          </span>
+          <div class="hero-underline" aria-hidden="true">
+            <svg viewBox="0 0 160 10" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <path id="u" d="M6 6 C 40 12, 120 -4, 154 6" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#9fd6ff" stop-opacity="0.9" />
+                  <stop offset="50%" stop-color="#fff1de" stop-opacity="0.95" />
+                  <stop offset="100%" stop-color="#eaf8ff" stop-opacity="0.9" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </h1>
+
+        <p class="mt-6 text-base md:text-lg text-white/60 max-w-2xl mx-auto">
+          A fluent speech assistive system that converts disfluent or stammered speech into smooth, natural text in real time — designed to help people communicate more fluently while preserving emotion and intent.
+        </p>
+
+        <div class="mt-8 flex items-center justify-center gap-4">
+          <a id="signupLink" href="/signup/" class="px-6 py-3 rounded-full cta-primary shadow-md inline-flex items-center justify-center">Create account</a>
+          <button id="learnBtn" class="px-6 py-3 rounded-full cta-ghost shadow-sm">Learn more</button>
+        </div>
+      </div>
+
+      <!-- creative stat strip retaining layout rhythm -->
+      <div class="mt-16 w-full max-w-4xl relative z-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-6 text-left">
+            <div class="text-[0.72rem] uppercase tracking-[0.28em] text-white/40">people helped</div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span class="text-3xl font-semibold">12k</span>
+              <span class="text-xs text-emerald-300/80">and growing</span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-emerald-200 to-sky-200" style="width:48%;"></div>
+            </div>
+          </div>
+          <div class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-6 text-left">
+            <div class="text-[0.72rem] uppercase tracking-[0.28em] text-white/40">recognized fluency</div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span class="text-3xl font-semibold">94%</span>
+              <span class="text-xs text-sky-300/80">median clarity score</span>
+            </div>
+            <div class="mt-4 flex items-center gap-2 text-xs text-white/55">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+              Emotion-aware smoothing
+            </div>
+          </div>
+          <div class="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-6 text-left">
+            <div class="text-[0.72rem] uppercase tracking-[0.28em] text-white/40">latency (avg)</div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span class="text-3xl font-semibold">220ms</span>
+              <span class="text-xs text-white/45">real-time pipeline</span>
+            </div>
+            <div class="mt-4 text-xs text-white/55">
+              Low-latency for natural conversation
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="w-full text-center py-12 text-xs text-white/40">
+      © 2026 Speech Assist. All rights reserved.
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.tsParticles) {
+          const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          tsParticles.load('tsparticles', {
+            fpsLimit: 60,
+            background: { color: 'transparent' },
+            particles: {
+              number: { value: 160, density: { enable: true, area: 900 } },
+              color: { value: ['#cfe8ff', '#8fd1ff', '#ffffff'] },
+              /* allow a mix of circles and polygonal shapes */
+              shape: { type: ['circle', 'polygon'], options: { polygon: { sides: 5 } } },
+              opacity: { value: 0.9, random: true, anim: { enable: true, speed: 0.6, minimumValue: 0.2, sync: false } },
+              size: { value: { min: 0.35, max: 2.6 } },
+              /* animate particles gently unless the user prefers reduced motion */
+              move: {
+                enable: !prefersReduced,
+                speed: 0.45,
+                direction: 'none',
+                random: true,
+                straight: false,
+                outModes: { default: 'bounce' }
+              },
+              /* subtle connecting lines between nearby particles (will update as particles move) */
+              links: {
+                enable: true,
+                distance: 140,
+                color: '#9fbff6',
+                opacity: 0.16,
+                width: 1
+              }
+            },
+            interactivity: {
+              detectsOn: 'window',
+              events: {
+                onHover: { enable: true, mode: 'grab' },
+                onClick: { enable: true, mode: 'connect' },
+                resize: true
+              },
+              modes: {
+                grab: { distance: 120, links: { opacity: 0.18 } },
+                connect: { distance: 160, links: { opacity: 0.36, width: 1.2, color: '#dfefff' } }
+              }
+            },
+            emitters: [
+              { position: { x: 102, y: 6 }, rate: { delay: 3.8, quantity: 1 }, particles: { move: { speed: 380, straight: true, outModes: { default: 'destroy' }, angle: { offset: 200, value: 10 } }, size: { value: 3.6 }, life: { duration: { value: 1.2 }, count: 1 }, trail: { enable: true, length: 30, fillColor: '#000' }, color: { value: '#ffffff' }, opacity: { value: 1 } } },
+              { position: { x: -2, y: 8 }, rate: { delay: 4.6, quantity: 1 }, particles: { move: { speed: 330, straight: true, outModes: { default: 'destroy' }, angle: { offset: 20, value: 10 } }, size: { value: 3.2 }, life: { duration: { value: 1.15 }, count: 1 }, trail: { enable: true, length: 26, fillColor: '#000' }, color: { value: '#fff' }, opacity: { value: 1 } } },
+              { position: { x: 50, y: -6 }, rate: { delay: 8.5, quantity: 1 }, particles: { move: { speed: 220, straight: true, outModes: { default: 'destroy' }, angle: { offset: 210, value: 18 } }, size: { value: 4.2 }, life: { duration: { value: 1.6 }, count: 1 }, trail: { enable: true, length: 46, fillColor: '#000' }, color: { value: '#eaf6ff' }, opacity: { value: 0.98 } } },
+              { position: { x: 96, y: 20 }, rate: { delay: 6.2, quantity: 1 }, particles: { move: { speed: 260, straight: true, outModes: { default: 'destroy' }, angle: { offset: 210, value: 10 } }, size: { value: 2.8 }, life: { duration: { value: 1.05 }, count: 1 }, trail: { enable: true, length: 20, fillColor: '#000' }, color: { value: '#fff' } } },
+              { position: { x: 4, y: 18 }, rate: { delay: 7.4, quantity: 1 }, particles: { move: { speed: 255, straight: true, outModes: { default: 'destroy' }, angle: { offset: 20, value: 10 } }, size: { value: 2.6 }, life: { duration: { value: 1.05 }, count: 1 }, trail: { enable: true, length: 20, fillColor: '#000' }, color: { value: '#fff' } } }
+            ]
+          });
+        }
+
+        const nav = document.getElementById('mainNav');
+        const mobileToggle = document.getElementById('mobileToggle');
+        const mobileIcon = document.getElementById('mobileIcon');
+        let mobileOpen = false;
+        const navMobileClasses = ['flex', 'flex-col', 'gap-6', 'absolute', 'top-[calc(100%+1rem)]', 'left-4', 'right-4', 'bg-black/80', 'backdrop-blur-2xl', 'p-6', 'rounded-2xl', 'border', 'border-white/10', 'shadow-2xl', 'z-50'];
+
+        const mobileOverlay = document.createElement('div');
+        mobileOverlay.className = 'fixed inset-0 z-40 bg-black/70 backdrop-blur-sm hidden md:hidden';
+        document.body.appendChild(mobileOverlay);
+
+        const setMobileIcon = (open) => {
+          if (!mobileIcon) return;
+          mobileIcon.innerHTML = open
+            ? '<path d="M6 6l12 12" stroke="white" stroke-width="1.5" stroke-linecap="round"/><path d="M6 18L18 6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>'
+            : '<path d="M4 7h16" stroke="white" stroke-width="1.5" stroke-linecap="round"/><path d="M4 12h16" stroke="white" stroke-width="1.5" stroke-linecap="round"/><path d="M4 17h16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>';
+        };
+
+        const openMobileNav = () => {
+          if (!nav) return;
+          nav.classList.remove('hidden');
+          nav.classList.add(...navMobileClasses);
+          mobileOverlay.classList.remove('hidden');
+          mobileToggle?.setAttribute('aria-expanded', 'true');
+          setMobileIcon(true);
+          mobileOpen = true;
+        };
+
+        const closeMobileNav = () => {
+          if (!nav) return;
+          nav.classList.add('hidden');
+          nav.classList.remove(...navMobileClasses);
+          mobileOverlay.classList.add('hidden');
+          mobileToggle?.setAttribute('aria-expanded', 'false');
+          setMobileIcon(false);
+          mobileOpen = false;
+        };
+
+        mobileToggle?.addEventListener('click', () => {
+          mobileOpen ? closeMobileNav() : openMobileNav();
+        });
+
+        mobileOverlay.addEventListener('click', closeMobileNav);
+
+        const handleResize = () => {
+          if (!nav) return;
+          if (window.innerWidth >= 768) {
+            nav.classList.remove('hidden');
+            nav.classList.remove(...navMobileClasses);
+            mobileOverlay.classList.add('hidden');
+            mobileOpen = false;
+            setMobileIcon(false);
+            mobileToggle?.setAttribute('aria-expanded', 'false');
+          } else if (!mobileOpen) {
+            nav.classList.add('hidden');
+            nav.classList.remove(...navMobileClasses);
+          }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+
+        // ensure body has padding equal to header height so content is not hidden under fixed header
+        const headerEl = document.querySelector('header');
+        function updateBodyPadding() {
+          if (!headerEl) return;
+          const h = headerEl.getBoundingClientRect().height;
+          document.body.style.paddingTop = h + 'px';
+        }
+        updateBodyPadding();
+        window.addEventListener('resize', updateBodyPadding);
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-[70] hidden items-center justify-center bg-black/70 backdrop-blur-md px-6';
+        modal.innerHTML = `
+          <div class="max-w-md w-full bg-white/6 border border-white/10 rounded-2xl p-6 space-y-5 relative shadow-[0_30px_80px_rgba(10,14,32,0.6)]" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="flex items-center justify-between">
+              <h3 id="modalTitle" class="text-lg font-semibold text-white">Request a demo</h3>
+              <button type="button" data-close-modal class="text-white/60 hover:text-white transition" aria-label="Close dialog">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6 18L18 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <p class="text-sm text-white/70">Leave your contact info and we'll reach out to schedule a live demo of the Emotion-Aware Assistive Speech Generator.</p>
+            <div class="space-y-3">
+              <input type="text" placeholder="Email or phone" class="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30" />
+              <textarea rows="3" placeholder="Tell us about your content goals" class="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"></textarea>
+            </div>
+            <div class="flex justify-end gap-3">
+              <button type="button" data-close-modal class="px-4 py-2 rounded-full cta-ghost text-sm">Not now</button>
+              <button id="requestDemoSubmit" type="button" class="px-4 py-2 rounded-full cta-primary text-sm font-semibold relative overflow-hidden">
+                <span class="glimmer"></span>
+                Request demo
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Signup modal (same styling as book-a-call)
+        const signupModal = document.createElement('div');
+        signupModal.className = 'fixed inset-0 z-[70] hidden items-center justify-center bg-black/70 backdrop-blur-md px-6';
+        signupModal.innerHTML = `
+          <div class="max-w-md w-full bg-white/6 border border-white/10 rounded-2xl p-6 space-y-5 relative shadow-[0_30px_80px_rgba(10,14,32,0.6)]" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+            <div class="flex items-center justify-between">
+              <h3 id="signupTitle" class="text-lg font-semibold text-white">Create your account</h3>
+              <button type="button" data-close-modal class="text-white/60 hover:text-white transition" aria-label="Close dialog">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6 18L18 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <p class="text-sm text-white/70">Sign up to access Contentium and start automating your content workflows.</p>
+            <div class="grid grid-cols-1 gap-3">
+              <div class="relative">
+                <input type="text" placeholder="Username" class="w-full px-3.5 py-2.5 rounded-xl input-ghost placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 pl-12" />
+                <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:0.9"> 
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z" stroke="#cfe8ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20c0-2.21 3.134-4 7-4s7 1.79 7 4" stroke="#cfe8ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+              <div class="relative">
+                <input type="email" placeholder="Email" class="w-full px-3.5 py-2.5 rounded-xl input-ghost placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 pl-12" />
+                <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:0.9">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 8l9 6 9-6" stroke="#cfe8ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+              <div class="relative">
+                <input type="password" placeholder="Password" class="w-full px-3.5 py-2.5 rounded-xl input-ghost placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 pl-12" />
+                <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:0.9">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="10" width="18" height="10" rx="2" stroke="#cfe8ff" stroke-width="1.2"/><path d="M7 10V8a5 5 0 0110 0v2" stroke="#cfe8ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+              <button type="button" data-close-modal class="px-4 py-2 rounded-full cta-ghost text-sm">Not now</button>
+              <button id="createAccountBtn" type="button" class="px-4 py-2 rounded-full cta-primary text-sm font-semibold relative overflow-hidden">
+                <span class="glimmer"></span>
+                Create account
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(signupModal);
+
+        // Login modal
+        const loginModal = document.createElement('div');
+        loginModal.className = 'fixed inset-0 z-[70] hidden items-center justify-center bg-black/70 backdrop-blur-md px-6';
+        loginModal.innerHTML = `
+          <div class="max-w-md w-full bg-white/6 border border-white/10 rounded-2xl p-6 space-y-5 relative shadow-[0_30px_80px_rgba(10,14,32,0.6)]" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+            <div class="flex items-center justify-between">
+              <h3 id="loginTitle" class="text-lg font-semibold text-white">Log in</h3>
+              <button type="button" data-close-modal class="text-white/60 hover:text-white transition" aria-label="Close dialog">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6 18L18 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <p class="text-sm text-white/70">Welcome back — sign in to continue.</p>
+            <div class="space-y-3">
+              <input type="email" placeholder="Email" class="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30" />
+              <input type="password" placeholder="Password" class="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30" />
+            </div>
+            <div class="flex justify-end gap-3">
+              <button type="button" data-close-modal class="px-4 py-2 rounded-full cta-ghost text-sm">Cancel</button>
+              <button type="button" class="px-4 py-2 rounded-full cta-primary text-sm font-semibold relative overflow-hidden">
+                <span class="glimmer"></span>
+                Sign in
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(loginModal);
+
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-6 right-6 z-[80] pointer-events-none hidden';
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+        toast.innerHTML = '<div class="px-4 py-3 rounded-xl bg-white/90 text-black text-sm font-medium shadow-[0_12px_40px_rgba(15,15,25,0.25)]">Request received! We\u2019ll reach out shortly.</div>';
+        document.body.appendChild(toast);
+
+        const showToast = () => {
+          toast.classList.remove('hidden');
+          requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            setTimeout(() => {
+              toast.style.opacity = '0';
+              setTimeout(() => toast.classList.add('hidden'), 400);
+            }, 2200);
+          });
+        };
+
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const modalContent = modal.querySelector('[role="dialog"]');
+
+        const openModal = () => {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          document.body.style.overflow = 'hidden';
+          const firstInput = modal.querySelector('input');
+          firstInput?.focus();
+        };
+
+        const closeModal = () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          document.body.style.overflow = '';
+        };
+
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) closeModal();
+        });
+
+        modal.querySelectorAll('[data-close-modal]').forEach((btn) => {
+          btn.addEventListener('click', closeModal);
+        });
+
+        // Signup and login now navigate to dedicated pages; modal code kept for "Request demo" functionality
+        // const signupBtn = document.getElementById('signupBtn');
+        // const loginBtn = document.getElementById('loginBtn');
+        // const openSignup = () => { signupModal.classList.remove('hidden'); signupModal.classList.add('flex'); document.body.style.overflow = 'hidden'; signupModal.querySelector('input')?.focus(); };
+        // const openLogin = () => { loginModal.classList.remove('hidden'); loginModal.classList.add('flex'); document.body.style.overflow = 'hidden'; loginModal.querySelector('input')?.focus(); };
+        // signupBtn?.addEventListener('click', openSignup);
+        // loginBtn?.addEventListener('click', openLogin);
+
+        modal.addEventListener('keydown', (event) => {
+          if (event.key !== 'Tab' || !modalContent) return;
+          const focusables = Array.from(modalContent.querySelectorAll(focusableSelectors)).filter((el) => !el.hasAttribute('disabled'));
+          if (!focusables.length) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          }
+
+          // store container when tsParticles finishes loading so we can access particle positions
+          try {
+            const tspLoad = tsParticles && tsParticles.load && tsParticles.load('tsparticles');
+            // if load returned a promise, capture the container when ready
+            if (tspLoad && typeof tspLoad.then === 'function') {
+              tspLoad.then((c) => { window.__tsparticlesContainer = c; }).catch(() => {});
+            }
+          } catch (e) {
+            // ignore
+          }
+
+        });
+
+        // Create an SVG overlay for drawing click lines
+        (function createClickLineOverlay() {
+          const svgNS = 'http://www.w3.org/2000/svg';
+          const svg = document.createElementNS(svgNS, 'svg');
+          svg.setAttribute('id', 'particleClickLines');
+          svg.style.position = 'fixed';
+          svg.style.inset = '0';
+          svg.style.pointerEvents = 'none';
+          svg.style.zIndex = '45';
+          svg.style.overflow = 'visible';
+          // blend mode and glow filter to make lines pop over dark backgrounds
+          svg.style.mixBlendMode = 'screen';
+          // add a subtle glow filter to defs
+          const defs = document.createElementNS(svgNS, 'defs');
+          defs.innerHTML = `
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          `;
+          svg.appendChild(defs);
+          document.body.appendChild(svg);
+
+          function getContainer() {
+            return window.__tsparticlesContainer || (tsParticles && tsParticles.dom && tsParticles.dom().length ? tsParticles.dom()[0] : (tsParticles && tsParticles.domItem ? tsParticles.domItem(0) : null));
+          }
+
+          // helper to draw a ripple circle and animate it via JS
+          function drawRipple(x, y, maxRadius = 48, duration = 900) {
+            const circle = document.createElementNS(svgNS, 'circle');
+            circle.setAttribute('cx', String(x));
+            circle.setAttribute('cy', String(y));
+            circle.setAttribute('r', '0');
+            circle.setAttribute('fill', 'none');
+            circle.setAttribute('stroke', '#dfefff');
+            circle.setAttribute('stroke-opacity', '1');
+            circle.setAttribute('stroke-width', '2');
+            // apply glow
+            circle.setAttribute('filter', 'url(#glow)');
+            svg.appendChild(circle);
+
+            const start = performance.now();
+            const fromR = 0;
+            const toR = maxRadius;
+
+            function tick(now) {
+              const t = Math.min(1, (now - start) / duration);
+              // ease-out cubic
+              const ease = 1 - Math.pow(1 - t, 3);
+              const r = fromR + (toR - fromR) * ease;
+              const opacity = 0.9 * (1 - ease);
+              circle.setAttribute('r', String(r));
+              circle.setAttribute('stroke-opacity', String(Math.max(0, opacity)));
+              if (t < 1) requestAnimationFrame(tick);
+              else { try { circle.remove(); } catch (e) {} }
+            }
+            requestAnimationFrame(tick);
+          }
+
+          document.addEventListener('click', (ev) => {
+            const container = getContainer();
+            if (!container || !container.particles || !container.canvas) return;
+            const particles = container.particles.array || [];
+            if (!particles.length) return;
+
+            const canvasRect = container.canvas.element.getBoundingClientRect();
+            const cx = ev.clientX;
+            const cy = ev.clientY;
+            const maxDist = 300; // increased distance to connect to more particles
+            const maxLines = 20; // maximum number of lines to draw
+
+            // find nearby particles
+            const nearby = particles.map((p) => {
+              const px = canvasRect.left + (p.position?.x ?? 0);
+              const py = canvasRect.top + (p.position?.y ?? 0);
+              const dx = px - cx;
+              const dy = py - cy;
+              const d = Math.hypot(dx, dy);
+              return { p, px, py, d };
+            }).filter(o => o.d <= maxDist).sort((a,b) => a.d - b.d).slice(0, maxLines);
+
+            if (!nearby.length) return;
+
+            // draw ripple for feedback; radius scales with number of connections
+            const rippleRadius = Math.min(160, 36 + nearby.length * 6);
+            drawRipple(cx, cy, rippleRadius, 900);
+
+            nearby.forEach((o, idx) => {
+              const line = document.createElementNS(svgNS, 'line');
+              line.setAttribute('x1', String(cx));
+              line.setAttribute('y1', String(cy));
+              line.setAttribute('x2', String(o.px));
+              line.setAttribute('y2', String(o.py));
+              line.setAttribute('stroke', '#eaf8ff');
+              line.setAttribute('stroke-opacity', '1');
+              // thicker for closer particles
+              const w = 1.2 + (1.6 * (1 - (o.d / maxDist)));
+              line.setAttribute('stroke-width', String(Math.max(0.8, w)));
+              line.setAttribute('stroke-linecap', 'round');
+              // make lines glow slightly
+              line.setAttribute('filter', 'url(#glow)');
+              line.style.transition = 'stroke-opacity 1400ms ease, transform 1400ms ease';
+              svg.appendChild(line);
+
+              // animate fade and remove slightly later for longer presence
+              requestAnimationFrame(() => {
+                line.setAttribute('stroke-opacity', '0');
+              });
+              setTimeout(() => { try { line.remove(); } catch (e) {} }, 1700);
+            });
+          }, { passive: true });
+        })();
+
+        const submitBtn = modal.querySelector('button.cta-primary');
+        submitBtn?.addEventListener('click', () => {
+          showToast();
+          closeModal();
+        });
+
+  const bookBtn = document.getElementById('bookBtn');
+  bookBtn?.addEventListener('click', openModal);
+
+  // wire hero Try a demo to open the same Request demo modal
+  const tryDemoBtn = document.getElementById('tryDemoBtn');
+  tryDemoBtn?.addEventListener('click', () => {
+    openModal();
+  });
+
+  // wire the modal's Request demo submit to show toast and close
+  const requestDemoSubmit = document.getElementById('requestDemoSubmit');
+  requestDemoSubmit?.addEventListener('click', () => {
+    showToast();
+    closeModal();
+  });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            if (!modal.classList.contains('hidden')) {
+              closeModal();
+            }
+            if (mobileOpen) {
+              closeMobileNav();
+            }
+          }
+        });
+
+        document.querySelectorAll('.cta-primary').forEach((btn) => {
+          const glimmer = btn.querySelector('.glimmer');
+          if (!glimmer) return;
+          btn.addEventListener('pointermove', (event) => {
+            const rect = btn.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            glimmer.style.setProperty('--glimmer-x', `${x}%`);
+            glimmer.style.setProperty('--glimmer-y', `${y}%`);
+          });
+        });
+
+        // Hero-specific tilt or pointer interactions removed with previous banner
+      });
+      // small enhancement: animate hero content on load and wire create account demo
+      (function() {
+        const hero = document.getElementById('heroContent');
+        if (!hero) return;
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReduced) {
+          requestAnimationFrame(() => { hero.classList.add('animate-in'); });
+        } else {
+          hero.classList.add('animate-in');
+        }
+
+        const createBtn = document.getElementById('createAccountBtn');
+        if (createBtn) {
+          createBtn.addEventListener('click', () => {
+            // simple demo validation: ensure fields are not empty
+            const modal = document.querySelector('#signupTitle')?.closest('[role="dialog"]');
+            const inputs = modal ? Array.from(modal.querySelectorAll('input')) : [];
+            const empty = inputs.some(i => !i.value.trim());
+            if (empty) {
+              // highlight first empty
+              const first = inputs.find(i => !i.value.trim());
+              first?.focus();
+              showToast();
+              return;
+            }
+            showToast();
+            // close signup modal after a short delay to simulate success
+            setTimeout(() => { modal?.classList.add('hidden'); modal?.classList.remove('flex'); document.body.style.overflow = ''; }, 700);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
