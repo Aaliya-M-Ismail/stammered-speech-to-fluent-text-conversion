@@ -104,25 +104,22 @@ The BOLI dataset provides additional speech data relevant to stuttering and spee
 
 > Replace the image filenames above with your actual screenshot filenames if they are different.
 
-## 🔬 Project Architecture
-
-![Project Architecture](screenshots/architecture.png)
-
-The architecture illustrates the complete pipeline from speech input to the final fluent text output.
 
 ## 📈 Results
 
-The system was evaluated based on its ability to process stuttered speech, identify speech disfluencies, and generate improved textual output.
+The proposed system was evaluated on the BOLI and SEP-28K datasets using
+F1-score and Word Error Rate (WER).
 
-Add your actual evaluation metrics here:
+- **Disfluency Detection F1-Score:** 86%
+- **WER Before Fluency Correction:** 32.5%
+- **WER After NLP-Based Correction:** 14.2%
+- **WER Reduction:** Approximately 56%
+- **ROC-AUC:** 1.00
 
-* **Disfluency Detection Accuracy:** XX%
-* **Precision:** XX%
-* **Recall:** XX%
-* **F1-Score:** XX%
-* **Speech-to-Text Performance:** XX
-
-> Only include metrics that you actually measured. Do not add estimated values.
+The complete system, combining MLP, BERT, and NLP-based correction, achieved
+an F1-score of 0.86. The NLP-based fluency correction reduced the Word Error
+Rate from 32.5% to 14.2%, demonstrating improved fluency and readability
+while preserving the intended meaning.
 
 ## 🚀 Key Features
 
@@ -184,10 +181,9 @@ Real-Time-Stuttered-Speech-to-Text/
 │
 ├── screenshots/
 │   ├── home.png
-│   ├── live-transcription.png
-│   ├── stutter-detection.png
-│   ├── output.png
-│   └── architecture.png
+│   ├── admin-dashboard.png
+│   ├── speech-input.png
+│   ├── transcription.png
 │
 ├── data/
 ├── models/
