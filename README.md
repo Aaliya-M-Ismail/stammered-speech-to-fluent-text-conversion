@@ -91,20 +91,16 @@ The BOLI dataset provides additional speech data relevant to stuttering and spee
 ## 🖥️ Application Screenshots
 
 ### Home Interface
-
 ![Home Interface](screenshots/home.png)
 
-### Real-Time Speech Transcription
+### Admin Dashboard
+![Admin Dashboard](screenshots/admin-dashboard.png)
 
-![Live Transcription](screenshots/live-transcription.png)
+### Speech Input
+![Speech Input](screenshots/speech-input.png)
 
-### Stutter Detection
-
-![Stutter Detection](screenshots/stutter-detection.png)
-
-### Final Fluent Text
-
-![Final Output](screenshots/output.png)
+### Transcription
+![Transcription](screenshots/transcription.png)
 
 > Replace the image filenames above with your actual screenshot filenames if they are different.
 
